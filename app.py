@@ -6,21 +6,28 @@ import io
 st.set_page_config(
     page_title="Mail Merge Pro",
     page_icon="✉️",
-    layout="centered" # Use centered layout
+    layout="centered" # Use a centered layout for the "web page" feel
 )
 
-# --- Advanced CSS for a custom webpage look ---
+# --- Advanced CSS for the final professional design ---
 st.markdown("""
 <style>
-    /* Hide Streamlit's default elements */
+    /* Hide Streamlit's default elements to create a custom look */
     .stApp {
         background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
-    header, .st-emotion-cache-18ni7ap { /* Hide the header and hamburger menu */
+    header, .st-emotion-cache-18ni7ap { /* Hides the default Streamlit header and hamburger menu */
         visibility: hidden;
     }
-    /* Main container as a styled card */
-    .st-emotion-cache-1y4p8pa { /* This targets the main block container */
+
+    /* --- FIX for White Text Issue --- */
+    /* This forces all header text and captions to be a dark color, overriding the default theme */
+    h1, h2, h3, h4, h5, h6, .st-emotion-cache-1g6goon, .st-emotion-cache-1y4p8pa p {
+        color: #31333F !important;
+    }
+    
+    /* Main container styled as a modern card */
+    .st-emotion-cache-1y4p8pa { /* This selector targets the main app container */
         padding: 2rem 2.5rem 3rem 2.5rem;
         border-radius: 20px;
         background-color: rgba(255, 255, 255, 0.9);
@@ -29,7 +36,8 @@ st.markdown("""
         -webkit-backdrop-filter: blur(4px);
         border: 1px solid rgba(255, 255, 255, 0.18);
     }
-    /* Button Styling */
+
+    /* Styling for all buttons */
     .stButton>button {
         border-radius: 50px;
         font-weight: 500;
@@ -49,12 +57,15 @@ st.markdown("""
 
 
 # --- Session State Initialization ---
+# This ensures the app remembers the results after processing.
 if 'processing_complete' not in st.session_state:
     st.session_state.processing_complete = False
     st.session_state.cleaned_df = pd.DataFrame()
     st.session_state.metrics = {}
 
-# --- Main App Content inside a single container ---
+
+# --- Main App Content ---
+# All elements are placed in a single flow for a clean, focused experience.
 with st.container():
     st.title("✉️ Mail Merge Pro")
     st.caption("The fastest way to prepare your recipient lists.")
@@ -76,6 +87,7 @@ with st.container():
                     if email_column not in df.columns:
                         st.error(f"Column '{email_column}' not found.")
                     else:
+                        # The core cleaning logic
                         df[email_column] = df[email_column].astype(str).str.split(';')
                         df = df.explode(email_column)
                         df[email_column] = df[email_column].str.strip()
@@ -86,6 +98,7 @@ with st.container():
                         df_deduped = df.drop_duplicates(subset=[email_column])
                         df_deduped.reset_index(drop=True, inplace=True)
                         
+                        # Store results in the session state to be displayed
                         st.session_state.cleaned_df = df_deduped
                         st.session_state.processing_complete = True
                         st.session_state.metrics = {
@@ -106,11 +119,13 @@ with st.container():
     else:
         st.success("Your list is ready!")
         
+        # Display key metrics in columns
         metric_col1, metric_col2, metric_col3 = st.columns(3)
         metric_col1.metric("Original", st.session_state.metrics["Original Recipients"])
         metric_col2.metric("Final", st.session_state.metrics["Final Recipients"])
         metric_col3.metric("Removed", st.session_state.metrics["Duplicates Removed"])
         
+        # Function to convert DataFrame to CSV for downloading
         @st.cache_data
         def convert_df_to_csv(df):
             return df.to_csv(index=False).encode('utf-8')
