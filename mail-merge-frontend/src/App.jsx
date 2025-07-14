@@ -34,7 +34,6 @@ const handleFetchError = async (response) => {
     }
 };
 
-// *** NEW: Function to download the CSV template ***
 const downloadCSVTemplate = () => {
     const headers = ['Primary State', 'First Name', 'Last Name', 'Primary Practice Name', 'Email', 'BCRI Email:', 'Devtracker ID'];
     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',');
@@ -180,7 +179,6 @@ const PrimaryButton = ({ onClick, isLoading, text, loadingText, icon = null, cla
     </motion.button>
 );
 
-// *** UPDATED FileUploadZone with Download Template Button ***
 const FileUploadZone = ({ isLoading, onFileSelect, fileInputRef }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     return (
@@ -290,7 +288,6 @@ const TemplateManager = ({ headers }) => {
                 <div className="flex items-center space-x-2 flex-shrink-0"><motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={() => { setTemplateToEdit(null); setIsModalOpen(true); }} className="p-2 bg-blue-600 rounded-lg hover:bg-blue-700"><PlusIcon /></motion.button><motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={() => { if(activeTemplate) {setTemplateToEdit(activeTemplate); setIsModalOpen(true);} }} disabled={!activeTemplate} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed"><EditIcon /></motion.button><motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={() => handleDeleteTemplate(activeTemplate?.id)} disabled={!activeTemplate} className="p-2 bg-red-800 rounded-lg hover:bg-red-700 disabled:bg-gray-800 disabled:cursor-not-allowed"><TrashIcon /></motion.button></div>
             </div>
             {activeTemplate ? (<div className="space-y-4"><div><label className="block text-sm font-medium text-gray-400 mb-2">Subject</label><div className="w-full p-3 bg-gray-900/50 border border-gray-700 rounded-lg">{activeTemplate.subject}</div></div><div><label className="block text-sm font-medium text-gray-400 mb-2">Body</label><div className="w-full p-3 h-48 overflow-y-auto bg-gray-900/50 border border-gray-700 rounded-lg font-mono text-sm whitespace-pre-wrap">{activeTemplate.body}</div></div></div>) : <div className="text-center text-gray-500 p-8">No template selected. Please create one.</div>}
-            <div><label className="block text-sm font-medium text-gray-400 mb-2">Insert Merge Fields <span className="text-xs">(available in edit mode)</span></label><div className="flex flex-wrap gap-2">{headers.map(header => (<button key={header} disabled className="px-3 py-1 text-sm bg-gray-800 text-gray-500 rounded-md cursor-not-allowed">{`<<${header.replace(/\s+/g, '_')}>>`}</button>))}</div></div>
             <PrimaryButton onClick={handleDownloadWordDoc} isLoading={isDownloading} text="Download as Word Document (.docx)" loadingText="Creating Document..." icon={<DownloadIcon className="w-5 h-5 mr-2" />} className="bg-green-600 hover:bg-green-700" disabled={!activeTemplate} />
             {error && <ErrorDisplay message={error} />}
             <AnimatePresence>{isModalOpen && (<TemplateModal headers={headers} templateToEdit={templateToEdit} onSave={handleSaveTemplate} onClose={() => setIsModalOpen(false)} />)}</AnimatePresence>
@@ -308,6 +305,7 @@ const TemplateManager = ({ headers }) => {
     );
 };
 
+// *** REMOVED the "Insert Merge Field" section from this modal ***
 const TemplateModal = ({ headers, templateToEdit, onSave, onClose }) => {
     const [title, setTitle] = useState('');
     const [subject, setSubject] = useState('');
@@ -320,26 +318,12 @@ const TemplateModal = ({ headers, templateToEdit, onSave, onClose }) => {
         setBody(templateToEdit?.body || '');
     }, [templateToEdit]);
 
-    const handleInsertField = (field) => {
-        const textarea = bodyRef.current;
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const text = textarea.value;
-        const newText = text.substring(0, start) + field + text.substring(end);
-        setBody(newText);
-        setTimeout(() => {
-            textarea.focus();
-            textarea.selectionStart = textarea.selectionEnd = start + field.length;
-        }, 0);
-    };
-
     const handleSubmit = (e) => {
         e.preventDefault();
         onSave({ id: templateToEdit?.id, title, subject, body });
     };
 
-    return (<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"><motion.div initial={{scale:0.9, y:20}} animate={{scale:1, y:0}} exit={{scale:0.9, y:20}} className="bg-slate-800 rounded-xl p-8 w-full max-w-2xl border border-slate-700 max-h-full overflow-y-auto"><h3 className="text-xl font-bold mb-6">{templateToEdit ? 'Edit Template' : 'Create New Template'}</h3><form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-400 mb-1">Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg" /></div><div><label className="block text-sm font-medium text-gray-400 mb-1">Subject</label><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} required className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg" /></div><div><label className="block text-sm font-medium text-gray-400 mb-1">Body</label><textarea ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} required rows="8" className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg font-mono text-sm" /></div><div><label className="block text-sm font-medium text-gray-400 mb-2">Insert Merge Fields</label><div className="flex flex-wrap gap-2">{headers.map(header => (<button type="button" key={header} onClick={() => handleInsertField(`<<${header.replace(/\s+/g, '_')}>>`)} className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 rounded-md">{`<<${header.replace(/\s+/g, '_')}>>`}</button>))}</div></div><div className="flex justify-end gap-4 pt-4"><motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600">Cancel</motion.button><motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700">Save Template</motion.button></div></form></motion.div></motion.div>);
+    return (<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"><motion.div initial={{scale:0.9, y:20}} animate={{scale:1, y:0}} exit={{scale:0.9, y:20}} className="bg-slate-800 rounded-xl p-8 w-full max-w-2xl border border-slate-700 max-h-full overflow-y-auto"><h3 className="text-xl font-bold mb-6">{templateToEdit ? 'Edit Template' : 'Create New Template'}</h3><form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-400 mb-1">Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg" /></div><div><label className="block text-sm font-medium text-gray-400 mb-1">Subject</label><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} required className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg" /></div><div><label className="block text-sm font-medium text-gray-400 mb-1">Body</label><textarea ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} required rows="8" className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg font-mono text-sm" /></div><div className="flex justify-end gap-4 pt-4"><motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600">Cancel</motion.button><motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700">Save Template</motion.button></div></form></motion.div></motion.div>);
 };
 
 const TutorialModal = ({ onClose }) => {
