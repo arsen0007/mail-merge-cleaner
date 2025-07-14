@@ -305,7 +305,6 @@ const TemplateManager = ({ headers }) => {
     );
 };
 
-// *** REMOVED the "Insert Merge Field" section from this modal ***
 const TemplateModal = ({ headers, templateToEdit, onSave, onClose }) => {
     const [title, setTitle] = useState('');
     const [subject, setSubject] = useState('');
@@ -326,18 +325,17 @@ const TemplateModal = ({ headers, templateToEdit, onSave, onClose }) => {
     return (<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"><motion.div initial={{scale:0.9, y:20}} animate={{scale:1, y:0}} exit={{scale:0.9, y:20}} className="bg-slate-800 rounded-xl p-8 w-full max-w-2xl border border-slate-700 max-h-full overflow-y-auto"><h3 className="text-xl font-bold mb-6">{templateToEdit ? 'Edit Template' : 'Create New Template'}</h3><form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-400 mb-1">Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg" /></div><div><label className="block text-sm font-medium text-gray-400 mb-1">Subject</label><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} required className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg" /></div><div><label className="block text-sm font-medium text-gray-400 mb-1">Body</label><textarea ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} required rows="8" className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg font-mono text-sm" /></div><div className="flex justify-end gap-4 pt-4"><motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600">Cancel</motion.button><motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700">Save Template</motion.button></div></form></motion.div></motion.div>);
 };
 
+// *** UPDATED TutorialModal with clearer steps ***
 const TutorialModal = ({ onClose }) => {
     const steps = [
-        { title: "Open Outlook (Classic)", description: "Open the classic desktop app version of Outlook.", imgPlaceholder: "step1_open_outlook.png" },
-        { title: "Create Your Spreadsheet", description: "Create a new Excel file with your headings (e.g., 'First Name', 'BCRI Email:') and recipient rows. Save it as .xlsx or .csv.", imgPlaceholder: "step2_create_excel.png" },
-        { title: "Clean Your List on This Website", description: "Use the 'List Cleaner' tab to upload your spreadsheet. Download the cleaned list it provides.", imgPlaceholder: "step3_use_website.png" },
-        { title: "Open Microsoft Word", description: "Start with a blank document. Or, you can use the '.docx' file you downloaded from our 'Email Templates' tab.", imgPlaceholder: "step4_open_word.png" },
-        { title: "Go to the 'Mailings' Tab", description: "In the top ribbon of Word, click on 'Mailings'.", imgPlaceholder: "step5_mailings_tab.png" },
-        { title: "Select Your Recipient List", description: "Click 'Select Recipients' > 'Use an Existing List...'. Find and select the 'cleaned_...' file you downloaded from this website.", imgPlaceholder: "step6_select_list.png" },
-        { title: "Write Email & Insert Fields", description: "Write your email. Click where you want personalized info (e.g., after 'Dear '), then click 'Insert Merge Field' and choose a column like 'First Name'.", imgPlaceholder: "step7_insert_fields.png" },
-        { title: "Preview Your Emails (Optional)", description: "Click 'Preview Results' to see how your emails will look with real data. Use the arrows to cycle through and check for errors.", imgPlaceholder: "step8_preview.png" },
-        { title: "Finish & Merge", description: "Click 'Finish & Merge' and select 'Send Email Messages...'.", imgPlaceholder: "step9_finish_merge.png" },
-        { title: "Set Email Options and Send", description: "In the 'To:' dropdown, select the 'BCRI Email:' column. Type or paste your subject line and click OK. If you see the names changing in the preview, it's working!", imgPlaceholder: "step10_send.png" },
+        { title: "Open Outlook", description: "Open the classic desktop app version of Outlook." },
+        { title: "Prepare Your Spreadsheet", description: "Get your contact list ready in a CSV or XLSX file. If you're starting from scratch, use the 'Download Template Spreadsheet' button on our website to get a file with the correct headers. Add your data to it and save." },
+        { title: "Upload and Clean Your List", description: "On our website, upload your spreadsheet in the 'Upload Your List' section. After it's analyzed, click 'Download Cleaned List' and save the new `cleaned_...` file." },
+        { title: "Download Your Word Template", description: "Go to the 'Prepare Your Template' section on our website. Choose a template from the list and click 'Download as Word Document'." },
+        { title: "Connect Your List in Word", description: "Open the downloaded Word document. Go to the 'Mailings' tab and click 'Select Recipients' > 'Use an Existing List...'. Find and select the `cleaned_...` file you just downloaded." },
+        { title: "Insert Merge Fields", description: "In your Word document, click where you want personalized info (e.g., after 'Dear '). On the 'Mailings' tab, click 'Insert Merge Field' and choose a column name from your list (e.g., `First_Name`)." },
+        { title: "Finish & Merge", description: "Click 'Finish & Merge' and select 'Send Email Messages...'." },
+        { title: "Send Your Emails", description: "In the final pop-up, set the 'To:' dropdown to your email column (e.g., `BCRI_Email_`). Add your subject line and click OK to send." },
     ];
 
     return (
@@ -354,7 +352,7 @@ const TutorialModal = ({ onClose }) => {
                             <div className="flex-1">
                                 <h3 className="font-bold text-lg text-white mb-1">{step.title}</h3>
                                 <p className="text-gray-400 mb-4">{step.description}</p>
-                                <div className="w-full h-48 bg-gray-900/50 border border-gray-700 rounded-lg flex items-center justify-center"><span className="text-gray-500 text-sm">Image: {step.imgPlaceholder}</span></div>
+                                <div className="w-full h-48 bg-gray-900/50 border border-gray-700 rounded-lg flex items-center justify-center"><span className="text-gray-500 text-sm">Image Placeholder</span></div>
                             </div>
                         </div>
                     ))}
