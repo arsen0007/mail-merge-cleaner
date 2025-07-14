@@ -239,9 +239,8 @@ const InputModeSwitcher = ({ mode, setMode, resetState }) => (
     </div>
 );
 
-// --- Manual Input Grid Component (with Header Templates) ---
+// --- Manual Input Grid Component (with ROBUST Paste) ---
 const ManualInputGrid = ({ onAnalyze, isLoading }) => {
-    // *** NEW: State for header templates ***
     const [headerTemplates, setHeaderTemplates] = useState([
         { name: 'Default Template', headers: ['Primary State', 'First Name', 'Last Name', 'Primary Practice Name', 'Email', 'BCRI Email:', 'Devtracker ID'] },
         { name: 'Simple Template', headers: ['Name', 'Email'] },
@@ -277,11 +276,22 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
         onAnalyze(validRows, headers, emailColumn);
     };
 
+    // *** NEW: Robust TSV/CSV Parser ***
+    const parsePastedText = (text) => {
+        // This parser handles tab-separated data and basic quoting
+        const lines = text.split(/\r?\n/).filter(line => line.length > 0);
+        return lines.map(line => {
+            // A simple tab split is often sufficient for Excel pastes
+            return line.split('\t');
+        });
+    };
+
     const handlePaste = (e, startRowIndex, startColIndex) => {
         e.preventDefault();
         const pasteData = e.clipboardData.getData('text/plain');
-        const parsedRows = pasteData.split(/\r?\n/).filter(row => row.length > 0);
-        const parsedData = parsedRows.map(row => row.split('\t'));
+        const parsedData = parsePastedText(pasteData);
+        
+        if (!parsedData || parsedData.length === 0) return;
 
         let newHeaders = [...headers];
         let newRows = JSON.parse(JSON.stringify(rows));
@@ -313,12 +323,10 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
         setRows(newRows);
     };
 
-    // *** NEW: Handler for applying a template ***
     const applyTemplate = (templateName) => {
         const template = headerTemplates.find(t => t.name === templateName);
         if (template) {
             setHeaders(template.headers);
-            // Also update the default email column if it exists in the new template
             if (template.headers.includes('BCRI Email:')) {
                 setEmailColumn('BCRI Email:');
             } else if (template.headers.includes('Email')) {
@@ -329,7 +337,6 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
         }
     };
 
-    // *** NEW: Handler for saving a custom template ***
     const saveCustomTemplate = () => {
         if (!newTemplateName.trim()) {
             alert('Please enter a name for your template.');
@@ -350,7 +357,6 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
 
     return (
         <div className="space-y-6">
-            {/* --- NEW: Template Management UI --- */}
             <div className="p-4 bg-gray-800/30 rounded-lg space-y-4">
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-grow">
