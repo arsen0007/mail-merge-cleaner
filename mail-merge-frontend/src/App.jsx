@@ -239,11 +239,18 @@ const InputModeSwitcher = ({ mode, setMode, resetState }) => (
     </div>
 );
 
-// --- Manual Input Grid Component (with Smart Paste) ---
+// --- Manual Input Grid Component (with Header Templates) ---
 const ManualInputGrid = ({ onAnalyze, isLoading }) => {
-    const [headers, setHeaders] = useState(['Name', 'Email']);
+    // *** NEW: State for header templates ***
+    const [headerTemplates, setHeaderTemplates] = useState([
+        { name: 'Default Template', headers: ['Primary State', 'First Name', 'Last Name', 'Primary Practice Name', 'Email', 'BCRI Email:', 'Devtracker ID'] },
+        { name: 'Simple Template', headers: ['Name', 'Email'] },
+    ]);
+    const [newTemplateName, setNewTemplateName] = useState('');
+
+    const [headers, setHeaders] = useState(headerTemplates[0].headers);
     const [rows, setRows] = useState([{}]);
-    const [emailColumn, setEmailColumn] = useState('Email');
+    const [emailColumn, setEmailColumn] = useState('BCRI Email:');
 
     const handleHeaderChange = (index, value) => {
         const newHeaders = [...headers];
@@ -270,7 +277,6 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
         onAnalyze(validRows, headers, emailColumn);
     };
 
-    // *** NEW: Smart Paste Logic ***
     const handlePaste = (e, startRowIndex, startColIndex) => {
         e.preventDefault();
         const pasteData = e.clipboardData.getData('text/plain');
@@ -278,24 +284,21 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
         const parsedData = parsedRows.map(row => row.split('\t'));
 
         let newHeaders = [...headers];
-        let newRows = JSON.parse(JSON.stringify(rows)); // Deep copy
+        let newRows = JSON.parse(JSON.stringify(rows));
 
         const numPastedRows = parsedData.length;
         const numPastedCols = Math.max(...parsedData.map(r => r.length));
 
-        // Expand columns if needed
         const requiredCols = startColIndex + numPastedCols;
         while (newHeaders.length < requiredCols) {
             newHeaders.push(`Header ${newHeaders.length + 1}`);
         }
 
-        // Expand rows if needed
         const requiredRows = startRowIndex + numPastedRows;
         while (newRows.length < requiredRows) {
             newRows.push({});
         }
 
-        // Populate the grid with pasted data
         parsedData.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 const targetRow = startRowIndex + rowIndex;
@@ -310,8 +313,62 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
         setRows(newRows);
     };
 
+    // *** NEW: Handler for applying a template ***
+    const applyTemplate = (templateName) => {
+        const template = headerTemplates.find(t => t.name === templateName);
+        if (template) {
+            setHeaders(template.headers);
+            // Also update the default email column if it exists in the new template
+            if (template.headers.includes('BCRI Email:')) {
+                setEmailColumn('BCRI Email:');
+            } else if (template.headers.includes('Email')) {
+                setEmailColumn('Email');
+            } else {
+                setEmailColumn(template.headers[0] || '');
+            }
+        }
+    };
+
+    // *** NEW: Handler for saving a custom template ***
+    const saveCustomTemplate = () => {
+        if (!newTemplateName.trim()) {
+            alert('Please enter a name for your template.');
+            return;
+        }
+        if (headerTemplates.some(t => t.name === newTemplateName.trim())) {
+            alert('A template with this name already exists.');
+            return;
+        }
+        const newTemplate = {
+            name: newTemplateName.trim(),
+            headers: [...headers]
+        };
+        setHeaderTemplates([...headerTemplates, newTemplate]);
+        setNewTemplateName('');
+        alert(`Template "${newTemplate.name}" saved!`);
+    };
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
+            {/* --- NEW: Template Management UI --- */}
+            <div className="p-4 bg-gray-800/30 rounded-lg space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-grow">
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Apply a Header Template</label>
+                        <select onChange={(e) => applyTemplate(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">
+                            {headerTemplates.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+                        </select>
+                    </div>
+                </div>
+                <details>
+                    <summary className="cursor-pointer text-sm text-blue-400 hover:text-blue-300">Save current headers as new template...</summary>
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                         <input type="text" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} placeholder="New template name..." className="flex-grow p-2 bg-gray-900 border border-gray-600 rounded-lg"/>
+                        <button onClick={saveCustomTemplate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold">Save Template</button>
+                    </div>
+                </details>
+            </div>
+
             <div className="w-full overflow-x-auto rounded-lg border border-gray-700">
                 <table className="w-full text-sm text-left">
                     <thead className="bg-gray-800/50">
