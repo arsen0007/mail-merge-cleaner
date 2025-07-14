@@ -47,7 +47,7 @@ export default function App() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     
-    // NEW: State for input mode
+    // State for input mode
     const [inputMode, setInputMode] = useState('upload'); // 'upload' or 'manual'
 
     const fileInputRef = useRef(null);
@@ -56,7 +56,6 @@ export default function App() {
     const resetState = () => {
         setFile(null); setHeaders([]); setSelectedEmailColumn(''); setCleaningResult(null);
         setError(null); setCurrentStep(1); if(fileInputRef.current) fileInputRef.current.value = "";
-        // Don't reset inputMode here, let the user decide.
     };
 
     // --- File Upload Logic ---
@@ -233,7 +232,6 @@ const FileUploadZone = ({ isLoading, onFileSelect, fileInputRef }) => {
 const FileDisplay = ({ file, onReset }) => (<div className="mt-4 p-4 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-between"><div className="flex items-center space-x-3"><FileIcon className="w-6 h-6 text-gray-400" /><span className="font-medium text-white">{file.name}</span></div><button onClick={onReset} className="text-sm text-red-400 hover:text-red-300">Start Over</button></div>);
 const ColumnSelector = ({ headers, selectedEmailColumn, setSelectedEmailColumn }) => (<div><label className="block text-sm font-medium text-gray-400 mb-2">Select Email Column</label><select value={selectedEmailColumn} onChange={(e) => setSelectedEmailColumn(e.target.value)} className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">{headers.map(h => <option key={h} value={h}>{h}</option>)}</select></div>);
 
-// --- NEW: Input Mode Switcher ---
 const InputModeSwitcher = ({ mode, setMode, resetState }) => (
     <div className="flex w-full bg-gray-800/50 rounded-lg p-1 mb-6">
         <button onClick={() => { setMode('upload'); resetState(); }} className={`w-1/2 py-2 rounded-md transition-colors ${mode === 'upload' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}>Upload File</button>
@@ -241,7 +239,7 @@ const InputModeSwitcher = ({ mode, setMode, resetState }) => (
     </div>
 );
 
-// --- NEW: Manual Input Grid Component ---
+// --- Manual Input Grid Component (with Smart Paste) ---
 const ManualInputGrid = ({ onAnalyze, isLoading }) => {
     const [headers, setHeaders] = useState(['Name', 'Email']);
     const [rows, setRows] = useState([{}]);
@@ -264,13 +262,52 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
     const addColumn = () => setHeaders([...headers, `Header ${headers.length + 1}`]);
 
     const handleAnalyzeClick = () => {
-        // Filter out rows where the selected email column is empty
         const validRows = rows.filter(row => row[emailColumn] && row[emailColumn].trim() !== '');
         if (validRows.length === 0) {
             alert(`Please fill in at least one row with a value for the '${emailColumn}' column.`);
             return;
         }
         onAnalyze(validRows, headers, emailColumn);
+    };
+
+    // *** NEW: Smart Paste Logic ***
+    const handlePaste = (e, startRowIndex, startColIndex) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text/plain');
+        const parsedRows = pasteData.split(/\r?\n/).filter(row => row.length > 0);
+        const parsedData = parsedRows.map(row => row.split('\t'));
+
+        let newHeaders = [...headers];
+        let newRows = JSON.parse(JSON.stringify(rows)); // Deep copy
+
+        const numPastedRows = parsedData.length;
+        const numPastedCols = Math.max(...parsedData.map(r => r.length));
+
+        // Expand columns if needed
+        const requiredCols = startColIndex + numPastedCols;
+        while (newHeaders.length < requiredCols) {
+            newHeaders.push(`Header ${newHeaders.length + 1}`);
+        }
+
+        // Expand rows if needed
+        const requiredRows = startRowIndex + numPastedRows;
+        while (newRows.length < requiredRows) {
+            newRows.push({});
+        }
+
+        // Populate the grid with pasted data
+        parsedData.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                const targetRow = startRowIndex + rowIndex;
+                const targetColHeader = newHeaders[startColIndex + colIndex];
+                if (newRows[targetRow] && targetColHeader) {
+                    newRows[targetRow][targetColHeader] = cell;
+                }
+            });
+        });
+
+        setHeaders(newHeaders);
+        setRows(newRows);
     };
 
     return (
@@ -292,7 +329,13 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
                             <tr key={rowIndex} className="border-t border-gray-700">
                                 {headers.map((header, colIndex) => (
                                     <td key={colIndex} className="p-0 border-r border-gray-700">
-                                        <input type="text" value={row[header] || ''} onChange={(e) => handleCellChange(rowIndex, header, e.target.value)} className="w-full h-full bg-transparent p-2 outline-none focus:bg-gray-700/50"/>
+                                        <input 
+                                            type="text" 
+                                            value={row[header] || ''} 
+                                            onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
+                                            onPaste={(e) => handlePaste(e, rowIndex, colIndex)}
+                                            className="w-full h-full bg-transparent p-2 outline-none focus:bg-gray-700/50"
+                                        />
                                     </td>
                                 ))}
                                 <td className="p-0 text-center">
@@ -313,7 +356,7 @@ const ManualInputGrid = ({ onAnalyze, isLoading }) => {
 };
 
 
-// --- Template Manager and Modals (with window.confirm fix) ---
+// --- Template Manager and Modals ---
 const TemplateManager = ({ headers }) => {
     const [templates, setTemplates] = useState([]);
     const [activeTemplate, setActiveTemplate] = useState(null);
