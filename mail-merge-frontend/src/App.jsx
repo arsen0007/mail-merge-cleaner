@@ -287,7 +287,7 @@ const TemplateManager = ({ headers }) => {
                 <select value={activeTemplate?.id || ''} onChange={(e) => setActiveTemplate(templates.find(t => t.id === parseInt(e.target.value)))} className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">{templates.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select>
                 <div className="flex items-center space-x-2 flex-shrink-0"><motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={() => { setTemplateToEdit(null); setIsModalOpen(true); }} className="p-2 bg-blue-600 rounded-lg hover:bg-blue-700"><PlusIcon /></motion.button><motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={() => { if(activeTemplate) {setTemplateToEdit(activeTemplate); setIsModalOpen(true);} }} disabled={!activeTemplate} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed"><EditIcon /></motion.button><motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={() => handleDeleteTemplate(activeTemplate?.id)} disabled={!activeTemplate} className="p-2 bg-red-800 rounded-lg hover:bg-red-700 disabled:bg-gray-800 disabled:cursor-not-allowed"><TrashIcon /></motion.button></div>
             </div>
-            {activeTemplate ? (<div className="space-y-4"><div><label className="block text-sm font-medium text-gray-400 mb-2">Subject</label><div className="w-full p-3 bg-gray-900/50 border border-gray-700 rounded-lg">{activeTemplate.subject}</div></div><div><label className="block text-sm font-medium text-gray-400 mb-2">Body</label><div className="w-full p-3 h-48 overflow-y-auto bg-gray-900/50 border border-gray-700 rounded-lg font-mono text-sm whitespace-pre-wrap">{activeTemplate.body}</div></div></div>) : <div className="text-center text-gray-500 p-8">No template selected. Please create one.</div>}
+            {activeTemplate ? (<div className="space-y-4"><div><label className="block text-sm font-medium text-gray-400 mb-1">Subject</label><div className="w-full p-3 bg-gray-900/50 border border-gray-700 rounded-lg">{activeTemplate.subject}</div></div><div><label className="block text-sm font-medium text-gray-400 mb-1">Body</label><div className="w-full p-3 h-48 overflow-y-auto bg-gray-900/50 border border-gray-700 rounded-lg font-mono text-sm whitespace-pre-wrap">{activeTemplate.body}</div></div></div>) : <div className="text-center text-gray-500 p-8">No template selected. Please create one.</div>}
             <PrimaryButton onClick={handleDownloadWordDoc} isLoading={isDownloading} text="Download as Word Document (.docx)" loadingText="Creating Document..." icon={<DownloadIcon className="w-5 h-5 mr-2" />} className="bg-green-600 hover:bg-green-700" disabled={!activeTemplate} />
             {error && <ErrorDisplay message={error} />}
             <AnimatePresence>{isModalOpen && (<TemplateModal headers={headers} templateToEdit={templateToEdit} onSave={handleSaveTemplate} onClose={() => setIsModalOpen(false)} />)}</AnimatePresence>
@@ -328,14 +328,14 @@ const TemplateModal = ({ headers, templateToEdit, onSave, onClose }) => {
 // *** UPDATED TutorialModal with clearer steps ***
 const TutorialModal = ({ onClose }) => {
     const steps = [
-        { title: "Open Outlook", description: "Open the classic desktop app version of Outlook." },
-        { title: "Prepare Your Spreadsheet", description: "Get your contact list ready in a CSV or XLSX file. If you're starting from scratch, use the 'Download Template Spreadsheet' button on our website to get a file with the correct headers. Add your data to it and save." },
-        { title: "Upload and Clean Your List", description: "On our website, upload your spreadsheet in the 'Upload Your List' section. After it's analyzed, click 'Download Cleaned List' and save the new `cleaned_...` file." },
-        { title: "Download Your Word Template", description: "Go to the 'Prepare Your Template' section on our website. Choose a template from the list and click 'Download as Word Document'." },
-        { title: "Connect Your List in Word", description: "Open the downloaded Word document. Go to the 'Mailings' tab and click 'Select Recipients' > 'Use an Existing List...'. Find and select the `cleaned_...` file you just downloaded." },
-        { title: "Insert Merge Fields", description: "In your Word document, click where you want personalized info (e.g., after 'Dear '). On the 'Mailings' tab, click 'Insert Merge Field' and choose a column name from your list (e.g., `First_Name`)." },
-        { title: "Finish & Merge", description: "Click 'Finish & Merge' and select 'Send Email Messages...'." },
-        { title: "Send Your Emails", description: "In the final pop-up, set the 'To:' dropdown to your email column (e.g., `BCRI_Email_`). Add your subject line and click OK to send." },
+        { title: "Open Outlook", description: "Open the classic desktop app version of Outlook.", image: "/images/tutorial_step_1.png" },
+        { title: "Prepare Your Spreadsheet", description: "Get your contact list ready in a CSV or XLSX file. If you're starting from scratch, use the 'Download Template Spreadsheet' button on our website to get a file with the correct headers. Add your data to it and save.", image: "/images/tutorial_step_2.png" },
+        { title: "Upload and Clean Your List", description: "On our website, upload your spreadsheet in the 'Upload Your List' section. After it's analyzed, click 'Download Cleaned List' and save the new `cleaned_...` file.", image: "/images/tutorial_step_3.png" },
+        { title: "Download Your Word Template", description: "Go to the 'Prepare Your Template' section on our website. Choose a template from the list and click 'Download as Word Document'.", image: "/images/tutorial_step_4.png" },
+        { title: "Connect Your List in Word", description: "Open the downloaded Word document. Go to the 'Mailings' tab and click 'Select Recipients' > 'Use an Existing List...'. Find and select the `cleaned_...` file you just downloaded.", image: "/images/tutorial_step_5.png" },
+        { title: "Insert Merge Fields", description: "In your Word document, click where you want personalized info (e.g., after 'Dear '). On the 'Mailings' tab, click 'Insert Merge Field' and choose a column name from your list (e.g., `First_Name`).", image: "/images/tutorial_step_6.png" },
+        { title: "Finish & Merge", description: "Click 'Finish & Merge' and select 'Send Email Messages...'.", image: "/images/tutorial_step_7.png" },
+        { title: "Send Your Emails", description: "In the final pop-up, set the 'To:' dropdown to your email column (e.g., `BCRI_Email_`). Add your subject line and click OK to send.", image: "/images/tutorial_step_8.png" },
     ];
 
     return (
@@ -352,7 +352,7 @@ const TutorialModal = ({ onClose }) => {
                             <div className="flex-1">
                                 <h3 className="font-bold text-lg text-white mb-1">{step.title}</h3>
                                 <p className="text-gray-400 mb-4">{step.description}</p>
-                                <div className="w-full h-48 bg-gray-900/50 border border-gray-700 rounded-lg flex items-center justify-center"><span className="text-gray-500 text-sm">Image Placeholder</span></div>
+                                <img src={step.image} alt={`Tutorial for ${step.title}`} className="w-full h-auto object-cover bg-gray-900/50 border border-gray-700 rounded-lg" />
                             </div>
                         </div>
                     ))}
