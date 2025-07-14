@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Icon Components (Enhanced with more detail) ---
+// --- Icon Components ---
 const UploadCloudIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>;
 const FileIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>;
 const DownloadIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>;
@@ -11,8 +11,8 @@ const TrashIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" 
 const XIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
 const LoadingSpinner = () => <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
 
-// --- API Base URL (Using Environment Variable) ---
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
+// --- API Base URL ---
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5001';
 
 // --- Helper Functions ---
 const triggerDownload = (blob, filename) => {
@@ -36,6 +36,7 @@ const handleFetchError = async (response) => {
 
 // --- Main App Component ---
 export default function App() {
+    // Overall App State
     const [file, setFile] = useState(null);
     const [headers, setHeaders] = useState([]);
     const [selectedEmailColumn, setSelectedEmailColumn] = useState('');
@@ -46,14 +47,19 @@ export default function App() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     
+    // NEW: State for input mode
+    const [inputMode, setInputMode] = useState('upload'); // 'upload' or 'manual'
+
     const fileInputRef = useRef(null);
     const resultsRef = useRef(null);
 
     const resetState = () => {
         setFile(null); setHeaders([]); setSelectedEmailColumn(''); setCleaningResult(null);
         setError(null); setCurrentStep(1); if(fileInputRef.current) fileInputRef.current.value = "";
+        // Don't reset inputMode here, let the user decide.
     };
 
+    // --- File Upload Logic ---
     const handleFileSelect = async (selectedFile) => {
         if (!selectedFile) return;
         resetState(); setFile(selectedFile); setIsLoading(true);
@@ -91,9 +97,42 @@ export default function App() {
         } catch (err) { setError(err.message); } finally { setIsDownloading(false); }
     };
 
+    // --- Manual Input Logic ---
+    const handleManualAnalysis = async (gridData, manualHeaders, manualEmailColumn) => {
+        setIsLoading(true); setError(null);
+        const payload = {
+            grid_data: gridData,
+            email_column: manualEmailColumn
+        };
+        try {
+            const response = await fetch(`${API_URL}/api/analyze_file`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) await handleFetchError(response);
+            const data = await response.json();
+            setHeaders(manualHeaders);
+            setSelectedEmailColumn(manualEmailColumn);
+            setCleaningResult(data);
+            setCurrentStep(2);
+            setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        } catch (err) { setError(err.message); } finally { setIsLoading(false); }
+    };
+
+    const handleManualDownload = async (gridData) => {
+        setIsDownloading(true); setError(null);
+        const payload = {
+            grid_data: gridData,
+            email_column: selectedEmailColumn
+        };
+        try {
+            const response = await fetch(`${API_URL}/api/download_cleaned_file`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) await handleFetchError(response);
+            const blob = await response.blob();
+            triggerDownload(blob, 'cleaned_manual_data.csv');
+        } catch (err) { setError(err.message); } finally { setIsDownloading(false); }
+    };
+
     return (
         <div className="min-h-screen w-full bg-gray-900 text-gray-200 font-sans antialiased relative overflow-hidden">
-            {/* Animated Gradient Background */}
+            {/* Background */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-slate-900 to-blue-900/50"></div>
                 <div className="absolute top-0 left-0 h-96 w-96 bg-blue-500/30 rounded-full filter blur-3xl opacity-20 animate-blob"></div>
@@ -102,37 +141,33 @@ export default function App() {
 
             <div className="relative z-10 container mx-auto max-w-4xl p-4 md:p-8">
                 <header className="text-center mb-12">
-                    <motion.h1 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="text-4xl md:text-5xl font-extrabold text-white tracking-tight"
-                    >
-                        Mail Merge Pro
-                    </motion.h1>
-                    <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                        className="text-gray-400 mt-2"
-                    >
-                        A smarter, guided workflow for your mail merge campaigns.
-                    </motion.p>
+                    <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Mail Merge Pro</motion.h1>
+                    <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="text-gray-400 mt-2">A smarter, guided workflow for your mail merge campaigns.</motion.p>
                 </header>
-                <motion.div 
-                    className="space-y-12"
-                    layout
-                >
+                <motion.div className="space-y-12" layout>
                     <AnimatePresence>
-                        <StepCard key="step1" step="1" title="Upload & Configure Your List">
-                            <FileUploadZone isLoading={isLoading} onFileSelect={handleFileSelect} fileInputRef={fileInputRef} />
-                            {file && (<motion.div initial={{opacity:0, height: 0}} animate={{opacity:1, height: 'auto'}}><FileDisplay file={file} onReset={resetState} /></motion.div>)}
-                            {currentStep >= 1.5 && headers.length > 0 && (
-                                <motion.div initial={{opacity:0, y: 10}} animate={{opacity:1, y: 0}}>
-                                    <ColumnSelector headers={headers} selectedEmailColumn={selectedEmailColumn} setSelectedEmailColumn={setSelectedEmailColumn} />
-                                    <PrimaryButton onClick={handleAnalyzeFile} isLoading={isLoading} text="Analyze My List" loadingText="Analyzing..." />
+                        <StepCard key="step1" step="1" title="Provide Your Data">
+                            <InputModeSwitcher mode={inputMode} setMode={setInputMode} resetState={resetState} />
+                            
+                            {inputMode === 'upload' && (
+                                <motion.div key="upload-zone" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
+                                    <FileUploadZone isLoading={isLoading} onFileSelect={handleFileSelect} fileInputRef={fileInputRef} />
+                                    {file && (<motion.div initial={{opacity:0, height: 0}} animate={{opacity:1, height: 'auto'}}><FileDisplay file={file} onReset={resetState} /></motion.div>)}
+                                    {currentStep >= 1.5 && headers.length > 0 && (
+                                        <motion.div initial={{opacity:0, y: 10}} animate={{opacity:1, y: 0}}>
+                                            <ColumnSelector headers={headers} selectedEmailColumn={selectedEmailColumn} setSelectedEmailColumn={setSelectedEmailColumn} />
+                                            <PrimaryButton onClick={handleAnalyzeFile} isLoading={isLoading} text="Analyze My List" loadingText="Analyzing..." />
+                                        </motion.div>
+                                    )}
                                 </motion.div>
                             )}
+                            
+                            {inputMode === 'manual' && (
+                                <motion.div key="manual-zone" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
+                                    <ManualInputGrid onAnalyze={handleManualAnalysis} isLoading={isLoading} />
+                                </motion.div>
+                            )}
+
                             {error && <ErrorDisplay message={error} />}
                         </StepCard>
 
@@ -147,7 +182,7 @@ export default function App() {
                                     {cleaningResult.removed_duplicates.length > 0 && (
                                         <details className="mt-6"><summary className="cursor-pointer font-medium text-blue-400 hover:text-blue-300">View Removed Duplicates Report</summary><div className="mt-2 p-4 h-48 overflow-y-auto rounded-lg bg-gray-900/50 border border-gray-700 text-sm text-gray-400"><ul>{cleaningResult.removed_duplicates.map(email => <li key={email}>{email}</li>)}</ul></div></details>
                                     )}
-                                    <PrimaryButton onClick={handleDownloadCleanedFile} isLoading={isDownloading} text="Download Cleaned List (.csv)" loadingText="Downloading..." icon={<DownloadIcon className="w-5 h-5 mr-2" />} className="bg-green-600 hover:bg-green-700 mt-6" />
+                                    <PrimaryButton onClick={inputMode === 'upload' ? handleDownloadCleanedFile : () => handleManualDownload(cleaningResult.grid_data)} isLoading={isDownloading} text="Download Cleaned List (.csv)" loadingText="Downloading..." icon={<DownloadIcon className="w-5 h-5 mr-2" />} className="bg-green-600 hover:bg-green-700 mt-6" />
                                 </StepCard>
                             </motion.div>
                         )}
@@ -196,10 +231,89 @@ const FileUploadZone = ({ isLoading, onFileSelect, fileInputRef }) => {
 };
 
 const FileDisplay = ({ file, onReset }) => (<div className="mt-4 p-4 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-between"><div className="flex items-center space-x-3"><FileIcon className="w-6 h-6 text-gray-400" /><span className="font-medium text-white">{file.name}</span></div><button onClick={onReset} className="text-sm text-red-400 hover:text-red-300">Start Over</button></div>);
-
 const ColumnSelector = ({ headers, selectedEmailColumn, setSelectedEmailColumn }) => (<div><label className="block text-sm font-medium text-gray-400 mb-2">Select Email Column</label><select value={selectedEmailColumn} onChange={(e) => setSelectedEmailColumn(e.target.value)} className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">{headers.map(h => <option key={h} value={h}>{h}</option>)}</select></div>);
 
-// --- Template Manager and Modals ---
+// --- NEW: Input Mode Switcher ---
+const InputModeSwitcher = ({ mode, setMode, resetState }) => (
+    <div className="flex w-full bg-gray-800/50 rounded-lg p-1 mb-6">
+        <button onClick={() => { setMode('upload'); resetState(); }} className={`w-1/2 py-2 rounded-md transition-colors ${mode === 'upload' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}>Upload File</button>
+        <button onClick={() => { setMode('manual'); resetState(); }} className={`w-1/2 py-2 rounded-md transition-colors ${mode === 'manual' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}>Create Manually</button>
+    </div>
+);
+
+// --- NEW: Manual Input Grid Component ---
+const ManualInputGrid = ({ onAnalyze, isLoading }) => {
+    const [headers, setHeaders] = useState(['Name', 'Email']);
+    const [rows, setRows] = useState([{}]);
+    const [emailColumn, setEmailColumn] = useState('Email');
+
+    const handleHeaderChange = (index, value) => {
+        const newHeaders = [...headers];
+        newHeaders[index] = value;
+        setHeaders(newHeaders);
+    };
+
+    const handleCellChange = (rowIndex, header, value) => {
+        const newRows = [...rows];
+        newRows[rowIndex][header] = value;
+        setRows(newRows);
+    };
+
+    const addRow = () => setRows([...rows, {}]);
+    const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
+    const addColumn = () => setHeaders([...headers, `Header ${headers.length + 1}`]);
+
+    const handleAnalyzeClick = () => {
+        // Filter out rows where the selected email column is empty
+        const validRows = rows.filter(row => row[emailColumn] && row[emailColumn].trim() !== '');
+        if (validRows.length === 0) {
+            alert(`Please fill in at least one row with a value for the '${emailColumn}' column.`);
+            return;
+        }
+        onAnalyze(validRows, headers, emailColumn);
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="w-full overflow-x-auto rounded-lg border border-gray-700">
+                <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-800/50">
+                        <tr>
+                            {headers.map((header, index) => (
+                                <th key={index} className="p-2 border-r border-gray-700">
+                                    <input type="text" value={header} onChange={(e) => handleHeaderChange(index, e.target.value)} className="w-full bg-transparent p-1 font-semibold focus:bg-gray-700 rounded-md outline-none"/>
+                                </th>
+                            ))}
+                            <th className="p-2"><button onClick={addColumn} className="w-full h-full text-blue-400 hover:text-blue-300">+</button></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map((row, rowIndex) => (
+                            <tr key={rowIndex} className="border-t border-gray-700">
+                                {headers.map((header, colIndex) => (
+                                    <td key={colIndex} className="p-0 border-r border-gray-700">
+                                        <input type="text" value={row[header] || ''} onChange={(e) => handleCellChange(rowIndex, header, e.target.value)} className="w-full h-full bg-transparent p-2 outline-none focus:bg-gray-700/50"/>
+                                    </td>
+                                ))}
+                                <td className="p-0 text-center">
+                                    <button onClick={() => removeRow(rowIndex)} className="text-red-500 hover:text-red-400 p-2 w-full h-full">&times;</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <button onClick={addRow} className="text-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">+ Add Row</button>
+            <div className="pt-4 border-t border-gray-700">
+                <ColumnSelector headers={headers} selectedEmailColumn={emailColumn} setSelectedEmailColumn={setEmailColumn} />
+                <PrimaryButton onClick={handleAnalyzeClick} isLoading={isLoading} text="Analyze This Data" loadingText="Analyzing..." />
+            </div>
+        </div>
+    );
+};
+
+
+// --- Template Manager and Modals (with window.confirm fix) ---
 const TemplateManager = ({ headers }) => {
     const [templates, setTemplates] = useState([]);
     const [activeTemplate, setActiveTemplate] = useState(null);
@@ -208,8 +322,6 @@ const TemplateManager = ({ headers }) => {
     const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [templateToEdit, setTemplateToEdit] = useState(null);
-    
-    // *** NEW: State for delete confirmation ***
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [templateToDelete, setTemplateToDelete] = useState(null);
 
@@ -247,14 +359,12 @@ const TemplateManager = ({ headers }) => {
         } catch (err) { alert(err.message); }
     };
     
-    // *** UPDATED: Logic to show confirmation modal ***
     const handleDeleteTemplate = async (id) => {
         if (!id) return;
         setTemplateToDelete(templates.find(t => t.id === id));
         setShowDeleteConfirm(true);
     };
 
-    // *** NEW: Logic to perform deletion after confirmation ***
     const confirmDelete = async () => {
         if (!templateToDelete) return;
         try {
@@ -293,7 +403,6 @@ const TemplateManager = ({ headers }) => {
             <PrimaryButton onClick={handleDownloadWordDoc} isLoading={isDownloading} text="Download as Word Document (.docx)" loadingText="Creating Document..." icon={<DownloadIcon className="w-5 h-5 mr-2" />} className="bg-green-600 hover:bg-green-700" disabled={!activeTemplate} />
             {error && <ErrorDisplay message={error} />}
             <AnimatePresence>{isModalOpen && (<TemplateModal headers={headers} templateToEdit={templateToEdit} onSave={handleSaveTemplate} onClose={() => setIsModalOpen(false)} />)}</AnimatePresence>
-            {/* *** NEW: Delete Confirmation Modal *** */}
             <AnimatePresence>
                 {showDeleteConfirm && (
                     <ConfirmationModal 
@@ -380,7 +489,6 @@ const TutorialModal = ({ onClose }) => {
     );
 };
 
-// *** NEW: General purpose confirmation modal ***
 const ConfirmationModal = ({ title, message, onConfirm, onCancel }) => {
     return (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -388,12 +496,8 @@ const ConfirmationModal = ({ title, message, onConfirm, onCancel }) => {
                 <h3 className="text-xl font-bold mb-4">{title}</h3>
                 <p className="text-gray-400 mb-6">{message}</p>
                 <div className="flex justify-end gap-4">
-                    <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={onCancel} className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600">
-                        Cancel
-                    </motion.button>
-                    <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700">
-                        Confirm
-                    </motion.button>
+                    <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={onCancel} className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600">Cancel</motion.button>
+                    <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700">Confirm</motion.button>
                 </div>
             </motion.div>
         </motion.div>
