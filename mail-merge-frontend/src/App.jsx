@@ -34,6 +34,20 @@ const handleFetchError = async (response) => {
     }
 };
 
+// *** NEW: Function to download the CSV template ***
+const downloadCSVTemplate = () => {
+    const headers = ['Primary State', 'First Name', 'Last Name', 'Primary Practice Name', 'Email', 'BCRI Email:', 'Devtracker ID'];
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(',');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "mail_merge_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+
 // --- Main App Component ---
 export default function App() {
     // Overall App State
@@ -47,9 +61,6 @@ export default function App() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     
-    // State for input mode
-    const [inputMode, setInputMode] = useState('upload'); // 'upload' or 'manual'
-
     const fileInputRef = useRef(null);
     const resultsRef = useRef(null);
 
@@ -96,39 +107,6 @@ export default function App() {
         } catch (err) { setError(err.message); } finally { setIsDownloading(false); }
     };
 
-    // --- Manual Input Logic ---
-    const handleManualAnalysis = async (gridData, manualHeaders, manualEmailColumn) => {
-        setIsLoading(true); setError(null);
-        const payload = {
-            grid_data: gridData,
-            email_column: manualEmailColumn
-        };
-        try {
-            const response = await fetch(`${API_URL}/api/analyze_file`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) await handleFetchError(response);
-            const data = await response.json();
-            setHeaders(manualHeaders);
-            setSelectedEmailColumn(manualEmailColumn);
-            setCleaningResult(data);
-            setCurrentStep(2);
-            setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-        } catch (err) { setError(err.message); } finally { setIsLoading(false); }
-    };
-
-    const handleManualDownload = async (gridData) => {
-        setIsDownloading(true); setError(null);
-        const payload = {
-            grid_data: gridData,
-            email_column: selectedEmailColumn
-        };
-        try {
-            const response = await fetch(`${API_URL}/api/download_cleaned_file`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) await handleFetchError(response);
-            const blob = await response.blob();
-            triggerDownload(blob, 'cleaned_manual_data.csv');
-        } catch (err) { setError(err.message); } finally { setIsDownloading(false); }
-    };
-
     return (
         <div className="min-h-screen w-full bg-gray-900 text-gray-200 font-sans antialiased relative overflow-hidden">
             {/* Background */}
@@ -145,28 +123,15 @@ export default function App() {
                 </header>
                 <motion.div className="space-y-12" layout>
                     <AnimatePresence>
-                        <StepCard key="step1" step="1" title="Provide Your Data">
-                            <InputModeSwitcher mode={inputMode} setMode={setInputMode} resetState={resetState} />
-                            
-                            {inputMode === 'upload' && (
-                                <motion.div key="upload-zone" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-                                    <FileUploadZone isLoading={isLoading} onFileSelect={handleFileSelect} fileInputRef={fileInputRef} />
-                                    {file && (<motion.div initial={{opacity:0, height: 0}} animate={{opacity:1, height: 'auto'}}><FileDisplay file={file} onReset={resetState} /></motion.div>)}
-                                    {currentStep >= 1.5 && headers.length > 0 && (
-                                        <motion.div initial={{opacity:0, y: 10}} animate={{opacity:1, y: 0}}>
-                                            <ColumnSelector headers={headers} selectedEmailColumn={selectedEmailColumn} setSelectedEmailColumn={setSelectedEmailColumn} />
-                                            <PrimaryButton onClick={handleAnalyzeFile} isLoading={isLoading} text="Analyze My List" loadingText="Analyzing..." />
-                                        </motion.div>
-                                    )}
+                        <StepCard key="step1" step="1" title="Upload Your List">
+                            <FileUploadZone isLoading={isLoading} onFileSelect={handleFileSelect} fileInputRef={fileInputRef} />
+                            {file && (<motion.div initial={{opacity:0, height: 0}} animate={{opacity:1, height: 'auto'}}><FileDisplay file={file} onReset={resetState} /></motion.div>)}
+                            {currentStep >= 1.5 && headers.length > 0 && (
+                                <motion.div initial={{opacity:0, y: 10}} animate={{opacity:1, y: 0}}>
+                                    <ColumnSelector headers={headers} selectedEmailColumn={selectedEmailColumn} setSelectedEmailColumn={setSelectedEmailColumn} />
+                                    <PrimaryButton onClick={handleAnalyzeFile} isLoading={isLoading} text="Analyze My List" loadingText="Analyzing..." />
                                 </motion.div>
                             )}
-                            
-                            {inputMode === 'manual' && (
-                                <motion.div key="manual-zone" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-                                    <ManualInputGrid onAnalyze={handleManualAnalysis} isLoading={isLoading} />
-                                </motion.div>
-                            )}
-
                             {error && <ErrorDisplay message={error} />}
                         </StepCard>
 
@@ -181,7 +146,7 @@ export default function App() {
                                     {cleaningResult.removed_duplicates.length > 0 && (
                                         <details className="mt-6"><summary className="cursor-pointer font-medium text-blue-400 hover:text-blue-300">View Removed Duplicates Report</summary><div className="mt-2 p-4 h-48 overflow-y-auto rounded-lg bg-gray-900/50 border border-gray-700 text-sm text-gray-400"><ul>{cleaningResult.removed_duplicates.map(email => <li key={email}>{email}</li>)}</ul></div></details>
                                     )}
-                                    <PrimaryButton onClick={inputMode === 'upload' ? handleDownloadCleanedFile : () => handleManualDownload(cleaningResult.grid_data)} isLoading={isDownloading} text="Download Cleaned List (.csv)" loadingText="Downloading..." icon={<DownloadIcon className="w-5 h-5 mr-2" />} className="bg-green-600 hover:bg-green-700 mt-6" />
+                                    <PrimaryButton onClick={handleDownloadCleanedFile} isLoading={isDownloading} text="Download Cleaned List (.csv)" loadingText="Downloading..." icon={<DownloadIcon className="w-5 h-5 mr-2" />} className="bg-green-600 hover:bg-green-700 mt-6" />
                                 </StepCard>
                             </motion.div>
                         )}
@@ -215,209 +180,29 @@ const PrimaryButton = ({ onClick, isLoading, text, loadingText, icon = null, cla
     </motion.button>
 );
 
+// *** UPDATED FileUploadZone with Download Template Button ***
 const FileUploadZone = ({ isLoading, onFileSelect, fileInputRef }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     return (
-        <motion.div 
-            className={`relative p-8 border-2 border-dashed rounded-xl text-center transition-colors duration-300 ${isDragOver ? 'border-blue-500 bg-blue-900/30' : 'border-gray-600 hover:border-blue-500'} ${isLoading ? 'cursor-wait' : 'cursor-pointer'}`}
-            onDragEnter={() => setIsDragOver(true)} onDragLeave={() => setIsDragOver(false)} onDragOver={(e) => e.preventDefault()} onDrop={(e) => {e.preventDefault(); e.stopPropagation(); setIsDragOver(false); onFileSelect(e.dataTransfer.files[0]);}}
-            onClick={() => !isLoading && fileInputRef.current.click()}
-        >
-            <div className="flex flex-col items-center justify-center text-gray-400"><UploadCloudIcon className="w-12 h-12 mb-4" /><p className="font-semibold"><span className="text-blue-400">Click to upload</span> or drag and drop</p><p className="text-sm">CSV or XLSX files supported</p></div>
-            <input type="file" ref={fileInputRef} onChange={(e) => onFileSelect(e.target.files[0])} className="hidden" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
-        </motion.div>
-    );
-};
-
-const FileDisplay = ({ file, onReset }) => (<div className="mt-4 p-4 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-between"><div className="flex items-center space-x-3"><FileIcon className="w-6 h-6 text-gray-400" /><span className="font-medium text-white">{file.name}</span></div><button onClick={onReset} className="text-sm text-red-400 hover:text-red-300">Start Over</button></div>);
-const ColumnSelector = ({ headers, selectedEmailColumn, setSelectedEmailColumn }) => (<div><label className="block text-sm font-medium text-gray-400 mb-2">Select Email Column</label><select value={selectedEmailColumn} onChange={(e) => setSelectedEmailColumn(e.target.value)} className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">{headers.map(h => <option key={h} value={h}>{h}</option>)}</select></div>);
-
-const InputModeSwitcher = ({ mode, setMode, resetState }) => (
-    <div className="flex w-full bg-gray-800/50 rounded-lg p-1 mb-6">
-        <button onClick={() => { setMode('upload'); resetState(); }} className={`w-1/2 py-2 rounded-md transition-colors ${mode === 'upload' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}>Upload File</button>
-        <button onClick={() => { setMode('manual'); resetState(); }} className={`w-1/2 py-2 rounded-md transition-colors ${mode === 'manual' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}>Create Manually</button>
-    </div>
-);
-
-// --- Manual Input Grid Component (with ROBUST Paste) ---
-const ManualInputGrid = ({ onAnalyze, isLoading }) => {
-    const [headerTemplates, setHeaderTemplates] = useState([
-        { name: 'Default Template', headers: ['Primary State', 'First Name', 'Last Name', 'Primary Practice Name', 'Email', 'BCRI Email:', 'Devtracker ID'] },
-        { name: 'Simple Template', headers: ['Name', 'Email'] },
-    ]);
-    const [newTemplateName, setNewTemplateName] = useState('');
-
-    const [headers, setHeaders] = useState(headerTemplates[0].headers);
-    const [rows, setRows] = useState([{}]);
-    const [emailColumn, setEmailColumn] = useState('BCRI Email:');
-
-    const handleHeaderChange = (index, value) => {
-        const newHeaders = [...headers];
-        newHeaders[index] = value;
-        setHeaders(newHeaders);
-    };
-
-    const handleCellChange = (rowIndex, header, value) => {
-        const newRows = [...rows];
-        newRows[rowIndex][header] = value;
-        setRows(newRows);
-    };
-
-    const addRow = () => setRows([...rows, {}]);
-    const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
-    const addColumn = () => setHeaders([...headers, `Header ${headers.length + 1}`]);
-
-    const handleAnalyzeClick = () => {
-        const validRows = rows.filter(row => row[emailColumn] && row[emailColumn].trim() !== '');
-        if (validRows.length === 0) {
-            alert(`Please fill in at least one row with a value for the '${emailColumn}' column.`);
-            return;
-        }
-        onAnalyze(validRows, headers, emailColumn);
-    };
-
-    // *** NEW: Robust TSV/CSV Parser ***
-    const parsePastedText = (text) => {
-        // This parser handles tab-separated data and basic quoting
-        const lines = text.split(/\r?\n/).filter(line => line.length > 0);
-        return lines.map(line => {
-            // A simple tab split is often sufficient for Excel pastes
-            return line.split('\t');
-        });
-    };
-
-    const handlePaste = (e, startRowIndex, startColIndex) => {
-        e.preventDefault();
-        const pasteData = e.clipboardData.getData('text/plain');
-        const parsedData = parsePastedText(pasteData);
-        
-        if (!parsedData || parsedData.length === 0) return;
-
-        let newHeaders = [...headers];
-        let newRows = JSON.parse(JSON.stringify(rows));
-
-        const numPastedRows = parsedData.length;
-        const numPastedCols = Math.max(...parsedData.map(r => r.length));
-
-        const requiredCols = startColIndex + numPastedCols;
-        while (newHeaders.length < requiredCols) {
-            newHeaders.push(`Header ${newHeaders.length + 1}`);
-        }
-
-        const requiredRows = startRowIndex + numPastedRows;
-        while (newRows.length < requiredRows) {
-            newRows.push({});
-        }
-
-        parsedData.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                const targetRow = startRowIndex + rowIndex;
-                const targetColHeader = newHeaders[startColIndex + colIndex];
-                if (newRows[targetRow] && targetColHeader) {
-                    newRows[targetRow][targetColHeader] = cell;
-                }
-            });
-        });
-
-        setHeaders(newHeaders);
-        setRows(newRows);
-    };
-
-    const applyTemplate = (templateName) => {
-        const template = headerTemplates.find(t => t.name === templateName);
-        if (template) {
-            setHeaders(template.headers);
-            if (template.headers.includes('BCRI Email:')) {
-                setEmailColumn('BCRI Email:');
-            } else if (template.headers.includes('Email')) {
-                setEmailColumn('Email');
-            } else {
-                setEmailColumn(template.headers[0] || '');
-            }
-        }
-    };
-
-    const saveCustomTemplate = () => {
-        if (!newTemplateName.trim()) {
-            alert('Please enter a name for your template.');
-            return;
-        }
-        if (headerTemplates.some(t => t.name === newTemplateName.trim())) {
-            alert('A template with this name already exists.');
-            return;
-        }
-        const newTemplate = {
-            name: newTemplateName.trim(),
-            headers: [...headers]
-        };
-        setHeaderTemplates([...headerTemplates, newTemplate]);
-        setNewTemplateName('');
-        alert(`Template "${newTemplate.name}" saved!`);
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="p-4 bg-gray-800/30 rounded-lg space-y-4">
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-grow">
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Apply a Header Template</label>
-                        <select onChange={(e) => applyTemplate(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">
-                            {headerTemplates.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
-                        </select>
-                    </div>
-                </div>
-                <details>
-                    <summary className="cursor-pointer text-sm text-blue-400 hover:text-blue-300">Save current headers as new template...</summary>
-                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                         <input type="text" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} placeholder="New template name..." className="flex-grow p-2 bg-gray-900 border border-gray-600 rounded-lg"/>
-                        <button onClick={saveCustomTemplate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold">Save Template</button>
-                    </div>
-                </details>
-            </div>
-
-            <div className="w-full overflow-x-auto rounded-lg border border-gray-700">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-800/50">
-                        <tr>
-                            {headers.map((header, index) => (
-                                <th key={index} className="p-2 border-r border-gray-700">
-                                    <input type="text" value={header} onChange={(e) => handleHeaderChange(index, e.target.value)} className="w-full bg-transparent p-1 font-semibold focus:bg-gray-700 rounded-md outline-none"/>
-                                </th>
-                            ))}
-                            <th className="p-2"><button onClick={addColumn} className="w-full h-full text-blue-400 hover:text-blue-300">+</button></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map((row, rowIndex) => (
-                            <tr key={rowIndex} className="border-t border-gray-700">
-                                {headers.map((header, colIndex) => (
-                                    <td key={colIndex} className="p-0 border-r border-gray-700">
-                                        <input 
-                                            type="text" 
-                                            value={row[header] || ''} 
-                                            onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
-                                            onPaste={(e) => handlePaste(e, rowIndex, colIndex)}
-                                            className="w-full h-full bg-transparent p-2 outline-none focus:bg-gray-700/50"
-                                        />
-                                    </td>
-                                ))}
-                                <td className="p-0 text-center">
-                                    <button onClick={() => removeRow(rowIndex)} className="text-red-500 hover:text-red-400 p-2 w-full h-full">&times;</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <button onClick={addRow} className="text-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">+ Add Row</button>
-            <div className="pt-4 border-t border-gray-700">
-                <ColumnSelector headers={headers} selectedEmailColumn={emailColumn} setSelectedEmailColumn={setEmailColumn} />
-                <PrimaryButton onClick={handleAnalyzeClick} isLoading={isLoading} text="Analyze This Data" loadingText="Analyzing..." />
+        <div className="space-y-4">
+            <motion.div 
+                className={`relative p-8 border-2 border-dashed rounded-xl text-center transition-colors duration-300 ${isDragOver ? 'border-blue-500 bg-blue-900/30' : 'border-gray-600 hover:border-blue-500'} ${isLoading ? 'cursor-wait' : 'cursor-pointer'}`}
+                onDragEnter={() => setIsDragOver(true)} onDragLeave={() => setIsDragOver(false)} onDragOver={(e) => e.preventDefault()} onDrop={(e) => {e.preventDefault(); e.stopPropagation(); setIsDragOver(false); onFileSelect(e.dataTransfer.files[0]);}}
+                onClick={() => !isLoading && fileInputRef.current.click()}
+            >
+                <div className="flex flex-col items-center justify-center text-gray-400"><UploadCloudIcon className="w-12 h-12 mb-4" /><p className="font-semibold"><span className="text-blue-400">Click to upload</span> or drag and drop</p><p className="text-sm">CSV or XLSX files supported</p></div>
+                <input type="file" ref={fileInputRef} onChange={(e) => onFileSelect(e.target.files[0])} className="hidden" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+            </motion.div>
+            <div className="text-center">
+                <span className="text-gray-500 text-sm">Don't have a file?</span>
+                <button onClick={downloadCSVTemplate} className="ml-2 text-blue-400 hover:text-blue-300 font-semibold text-sm underline">Download Template Spreadsheet</button>
             </div>
         </div>
     );
 };
 
+const FileDisplay = ({ file, onReset }) => (<div className="mt-4 p-4 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-between"><div className="flex items-center space-x-3"><FileIcon className="w-6 h-6 text-gray-400" /><span className="font-medium text-white">{file.name}</span></div><button onClick={onReset} className="text-sm text-red-400 hover:text-red-300">Start Over</button></div>);
+const ColumnSelector = ({ headers, selectedEmailColumn, setSelectedEmailColumn }) => (<div><label className="block text-sm font-medium text-gray-400 mb-2">Select Email Column</label><select value={selectedEmailColumn} onChange={(e) => setSelectedEmailColumn(e.target.value)} className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">{headers.map(h => <option key={h} value={h}>{h}</option>)}</select></div>);
 
 // --- Template Manager and Modals ---
 const TemplateManager = ({ headers }) => {
