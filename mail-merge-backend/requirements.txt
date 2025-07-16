@@ -1,0 +1,5 @@
+flask
+flask_cors
+pandas
+openpyxl # Required by pandas to read .xlsx files
+python-docx # For creating .docx files

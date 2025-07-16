@@ -1,0 +1,15 @@
+command to check logs 
+
+tail -f api.log
+
+
+command to run always 
+
+nohup python -u api.py > api.log 2>&1 &
+
+# Find the process running your api.py
+ps aux | grep "python -u api.py"
+
+# You'll see a line with a PID. Use that number to stop it.
+# (Replace PID with the actual number you see)
+kill PID

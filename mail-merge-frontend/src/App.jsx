@@ -40,7 +40,7 @@ const downloadCSVTemplate = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "mail_merge_template.csv");
+    link.setAttribute("download", "recepient_list_template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -193,7 +193,7 @@ const FileUploadZone = ({ isLoading, onFileSelect, fileInputRef }) => {
             </motion.div>
             <div className="text-center">
                 <span className="text-gray-500 text-sm">Don't have a file?</span>
-                <button onClick={downloadCSVTemplate} className="ml-2 text-blue-400 hover:text-blue-300 font-semibold text-sm underline">Download Template Spreadsheet</button>
+                <button onClick={downloadCSVTemplate} className="ml-2 text-blue-400 hover:text-blue-300 font-semibold text-sm underline">Download Recepient's list</button>
             </div>
         </div>
     );
