@@ -1,3 +1,5 @@
+import { Panel, PostmarkBadge } from '@/components/ui';
+
 const steps = [
   { title: "Open Outlook", description: "Open the classic desktop app version of Outlook.", image: "/images/tutorial_step_1.png" },
   { title: "Prepare Your Spreadsheet", description: "Get your contact list ready in a CSV or XLSX file. If you're starting from scratch, use the 'Download Template Spreadsheet' button on our website to get a file with the correct headers. Add your data to it and save.", image: "/images/tutorial_step_2.png" },
@@ -11,19 +13,28 @@ const steps = [
 
 export default function TutorialPage() {
   return (
-    <div className="bg-slate-900/50 backdrop-blur-xl p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl shadow-black/30 space-y-10">
-      <h2 className="text-2xl font-bold text-white">Mail Merge Tutorial</h2>
-      {steps.map((step, index) => (
-        <div key={index} className="flex flex-col md:flex-row items-start gap-6">
-          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-600/30">{index + 1}</div>
-          <div className="flex-1">
-            <h3 className="font-bold text-lg text-white mb-1">{step.title}</h3>
-            <p className="text-gray-400 mb-4">{step.description}</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={step.image} alt={`Tutorial for ${step.title}`} className="w-full h-auto object-cover bg-gray-900/50 border border-gray-700 rounded-lg" />
-          </div>
-        </div>
-      ))}
-    </div>
+    <Panel label="Route Sheet" className="space-y-2">
+      <h2 className="text-xl font-mono font-bold text-ink mb-8">Mail Merge Tutorial</h2>
+      <ol className="space-y-2">
+        {steps.map((step, index) => (
+          <li key={index} className="relative flex flex-col md:flex-row items-start gap-6 pb-10 last:pb-0">
+            {index < steps.length - 1 && (
+              <span aria-hidden="true" className="hidden md:block absolute left-[23px] top-12 bottom-0 w-px border-l border-dashed border-line" />
+            )}
+            <PostmarkBadge className="relative z-10 w-12 h-12 font-mono font-bold text-lg bg-paper-raised">
+              {index + 1}
+            </PostmarkBadge>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-mono font-bold text-ink mb-1">{step.title}</h3>
+              <p className="text-ink-soft mb-4 leading-relaxed text-sm">{step.description}</p>
+              <div className="inline-block p-2 bg-paper-sunken/50 border border-line rounded-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={step.image} alt={`Tutorial for ${step.title}`} className="w-full h-auto object-cover rounded-[1px] max-w-xl" />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </Panel>
   );
 }

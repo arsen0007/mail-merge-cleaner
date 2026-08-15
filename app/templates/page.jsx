@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { fetchTemplates, createTemplate, updateTemplate, deleteTemplate } from '@/lib/templates';
 import { createTemplateDocxBlob } from '@/lib/generateDocx';
-import { PrimaryButton, ErrorDisplay, LoadingSpinner } from '@/components/ui';
+import { PrimaryButton, ErrorDisplay, LoadingSpinner, Panel } from '@/components/ui';
 import { PlusIcon, EditIcon, TrashIcon, DownloadIcon } from '@/components/icons';
 import TemplateModal from '@/components/TemplateModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -102,41 +102,41 @@ export default function TemplatesPage() {
     }
   };
 
-  if (isLoading) return <div className="text-center p-8"><LoadingSpinner /></div>;
+  if (isLoading) return <div className="text-center p-8 text-stamp-dark"><LoadingSpinner /></div>;
 
   return (
-    <div className="bg-slate-900/50 backdrop-blur-xl p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl shadow-black/30 space-y-6">
-      <h2 className="text-2xl font-bold text-white">Template Builder</h2>
+    <Panel label="Form 02 — Template Builder" className="space-y-6">
+      <h2 className="text-xl font-mono font-bold text-ink">Template Builder</h2>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <select
           value={activeTemplate?.id || ''}
           onChange={(e) => setActiveTemplate(templates.find((t) => t.id === parseInt(e.target.value, 10)))}
-          className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 bg-paper border border-line rounded-sm text-ink focus:ring-2 focus:ring-stamp/40 focus:border-stamp"
         >
           {templates.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
         </select>
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <button aria-label="Create new template" onClick={() => { setTemplateToEdit(null); setIsModalOpen(true); }} className="p-2 bg-blue-600 rounded-lg hover:bg-blue-700">
-            <PlusIcon />
+        <div className="flex items-center space-x-2 flex-shrink-0 self-end sm:self-auto">
+          <button aria-label="Create new template" onClick={() => { setTemplateToEdit(null); setIsModalOpen(true); }} className="p-2 bg-stamp text-paper-raised rounded-sm hover:bg-stamp-dark transition-colors">
+            <PlusIcon className="w-5 h-5" />
           </button>
           <button
             aria-label="Edit template"
             onClick={() => { if (activeTemplate) { setTemplateToEdit(activeTemplate); setIsModalOpen(true); } }}
             disabled={!activeTemplate || activeTemplate.is_default}
             title={activeTemplate?.is_default ? 'Built-in template — cannot be edited' : undefined}
-            className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed"
+            className="p-2 bg-paper-sunken text-ink rounded-sm border border-line hover:border-stamp disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <EditIcon />
+            <EditIcon className="w-5 h-5" />
           </button>
           <button
             aria-label="Delete template"
             onClick={() => handleDeleteTemplate(activeTemplate?.id)}
             disabled={!activeTemplate || activeTemplate.is_default}
             title={activeTemplate?.is_default ? 'Built-in template — cannot be edited' : undefined}
-            className="p-2 bg-red-800 rounded-lg hover:bg-red-700 disabled:bg-gray-800 disabled:cursor-not-allowed"
+            className="p-2 bg-paper-sunken text-stamp-dark rounded-sm border border-line hover:border-stamp disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <TrashIcon />
+            <TrashIcon className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -144,16 +144,16 @@ export default function TemplatesPage() {
       {activeTemplate ? (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Subject</label>
-            <div className="w-full p-3 bg-gray-900/50 border border-gray-700 rounded-lg">{activeTemplate.subject}</div>
+            <label className="block text-xs font-mono uppercase tracking-[0.15em] text-ink-soft mb-1">Subject</label>
+            <div className="w-full p-3 bg-paper-sunken/40 border border-line rounded-sm text-ink text-sm">{activeTemplate.subject}</div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Body</label>
-            <div className="w-full p-3 h-48 overflow-y-auto bg-gray-900/50 border border-gray-700 rounded-lg font-mono text-sm whitespace-pre-wrap">{activeTemplate.body}</div>
+            <label className="block text-xs font-mono uppercase tracking-[0.15em] text-ink-soft mb-1">Body</label>
+            <div className="w-full p-3 h-48 overflow-y-auto bg-paper-sunken/40 border border-line rounded-sm font-mono text-sm text-ink whitespace-pre-wrap">{activeTemplate.body}</div>
           </div>
         </div>
       ) : (
-        <div className="text-center text-gray-500 p-8">No template selected. Please create one.</div>
+        <div className="text-center text-ink-faint p-8 text-sm">No template selected. Please create one.</div>
       )}
 
       <PrimaryButton
@@ -161,8 +161,8 @@ export default function TemplatesPage() {
         isLoading={isDownloading}
         text="Download as Word Document (.docx)"
         loadingText="Creating Document..."
-        icon={<DownloadIcon className="w-5 h-5 mr-2" />}
-        className="bg-green-600 hover:bg-green-700"
+        icon={<DownloadIcon className="w-5 h-5" />}
+        className="bg-seal hover:bg-seal-dark"
         disabled={!activeTemplate}
       />
 
@@ -183,6 +183,6 @@ export default function TemplatesPage() {
           />
         )}
       </AnimatePresence>
-    </div>
+    </Panel>
   );
 }

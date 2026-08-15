@@ -1,6 +1,22 @@
+import { Space_Mono, Libre_Franklin } from 'next/font/google';
 import './globals.css';
 import Nav from '@/components/Nav';
+import Footer from '@/components/Footer';
 import SessionTracker from '@/components/SessionTracker';
+import MotionProvider from '@/components/MotionProvider';
+
+const displayFont = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const bodyFont = Libre_Franklin({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+});
 
 export const metadata = {
   title: 'Mail Merge Pro',
@@ -9,18 +25,17 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen w-full bg-gray-900 text-gray-200 font-sans antialiased relative overflow-x-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-slate-900 to-blue-900/50"></div>
-          <div className="absolute top-0 left-0 h-96 w-96 bg-blue-500/30 rounded-full filter blur-3xl opacity-20 animate-blob"></div>
-          <div className="absolute bottom-0 right-0 h-96 w-96 bg-purple-500/30 rounded-full filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-        </div>
-        <Nav />
-        <SessionTracker />
-        <div className="relative z-10 container mx-auto max-w-4xl p-4 md:p-8">
-          {children}
-        </div>
+    <html lang="en" className={`${displayFont.variable} ${bodyFont.variable}`}>
+      <body className="min-h-screen w-full bg-paper text-ink font-sans antialiased relative overflow-x-hidden">
+        <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 paper-texture paper-vignette" />
+        <MotionProvider>
+          <Nav />
+          <SessionTracker />
+          <div className="relative z-10 container mx-auto max-w-4xl p-4 md:p-8">
+            {children}
+          </div>
+          <Footer />
+        </MotionProvider>
       </body>
     </html>
   );

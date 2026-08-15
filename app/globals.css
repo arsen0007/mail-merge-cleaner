@@ -1,14 +1,99 @@
 @import "tailwindcss";
 
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+/*
+  Design system: "Postal Ledger"
+  A correspondence-desk aesthetic for a mail-merge tool: paper surfaces,
+  ledger rules, a single postage-stamp ink accent, and a typewriter/mono
+  display face paired with a warm grotesk body face.
+*/
+@theme {
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-display), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-paper: #f3efe6;
+  --color-paper-raised: #fbf9f4;
+  --color-paper-sunken: #ece6d8;
+  --color-ink: #221f1a;
+  --color-ink-soft: #6e6656;
+  --color-ink-faint: #a49c88;
+  --color-line: #dcd3bd;
+  --color-stamp: #b23a22;
+  --color-stamp-dark: #8a2c19;
+  --color-stamp-light: #e8cec3;
+  --color-seal: #3d6350;
+  --color-seal-dark: #2c4a3a;
 }
-.animate-blob {
-  animation: blob 7s infinite;
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-stamp);
+    color: var(--color-paper-raised);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-stamp);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
-.animation-delay-4000 {
-  animation-delay: 4s;
+
+@layer utilities {
+  /* Faint ledger rules + paper grain, standing in for the old gradient blobs. */
+  .paper-texture {
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-ink) 4%, transparent) 0px,
+        color-mix(in srgb, var(--color-ink) 4%, transparent) 1px,
+        transparent 1px,
+        transparent 32px
+      ),
+      radial-gradient(circle at 1.5px 1.5px, color-mix(in srgb, var(--color-ink) 7%, transparent) 1px, transparent 0);
+    background-size: 100% 32px, 14px 14px;
+    background-position: 0 0, 0 0;
+  }
+
+  .paper-vignette {
+    background: radial-gradient(
+      ellipse 80% 60% at 85% -10%,
+      color-mix(in srgb, var(--color-stamp) 7%, transparent),
+      transparent 60%
+    );
+  }
+
+  .rule-double {
+    border-top: 3px double var(--color-line);
+  }
+
+  .postmark-ring {
+    border: 1.5px dashed currentColor;
+    border-radius: 9999px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
