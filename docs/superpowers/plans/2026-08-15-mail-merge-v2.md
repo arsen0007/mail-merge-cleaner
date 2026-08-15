@@ -36,7 +36,7 @@
 - Consumes: nothing (first task)
 - Produces: a working `npm run dev` / `npm test` toolchain that every later task builds on. The `@/*` import alias resolves to the repo root for both Next.js and Vitest.
 
-- [ ] **Step 1: Remove the stray orphaned root `package-lock.json`**
+- [x] **Step 1: Remove the stray orphaned root `package-lock.json`**
 
 It has no corresponding root `package.json` (leftover from an old experiment) and its presence makes `create-next-app` refuse to scaffold into a "non-empty" directory.
 
@@ -45,7 +45,7 @@ git rm package-lock.json
 git commit -m "chore: remove orphaned root package-lock.json before v2 scaffold"
 ```
 
-- [ ] **Step 2: Scaffold the Next.js app**
+- [x] **Step 2: Scaffold the Next.js app** (scaffolded into a temp dir and merged into repo root, since v1's leftover files blocked create-next-app's in-place check; produced Next.js 16 + Tailwind v4, see commit for full deviation notes)
 
 ```bash
 npx create-next-app@latest . --js --tailwind --eslint --app --no-src-dir --import-alias "@/*"
@@ -53,19 +53,19 @@ npx create-next-app@latest . --js --tailwind --eslint --app --no-src-dir --impor
 
 Answer any remaining interactive prompts by accepting defaults (the flags above should make it non-interactive, but if prompted, confirm "Yes" to any "install in current directory" question).
 
-- [ ] **Step 3: Install runtime dependencies**
+- [x] **Step 3: Install runtime dependencies** (xlsx installed from SheetJS's CDN instead of npm — npm's copy has an unpatched high-severity advisory)
 
 ```bash
 npm install @supabase/supabase-js papaparse xlsx docx framer-motion
 ```
 
-- [ ] **Step 4: Install test dependencies**
+- [x] **Step 4: Install test dependencies**
 
 ```bash
 npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom jsdom
 ```
 
-- [ ] **Step 5: Create the Vitest config**
+- [x] **Step 5: Create the Vitest config**
 
 Create `vitest.config.js`:
 
@@ -95,7 +95,7 @@ Create `vitest.setup.js`:
 import '@testing-library/jest-dom/vitest';
 ```
 
-- [ ] **Step 6: Add test scripts to `package.json`**
+- [x] **Step 6: Add test scripts to `package.json`**
 
 Add to the `"scripts"` block:
 
@@ -104,7 +104,7 @@ Add to the `"scripts"` block:
 "test:watch": "vitest"
 ```
 
-- [ ] **Step 7: Fix v1's dead blob-animation CSS**
+- [x] **Step 7: Fix v1's dead blob-animation CSS** (also dropped the default Tailwind-v4 scaffold's unlayered `body{}` rule — it would have overridden every `bg-gray-900`/`text-gray-200` utility class from the root layout, per Tailwind v4's unlayered-CSS-always-wins cascade rule)
 
 Overwrite `app/globals.css` with:
 
@@ -129,7 +129,7 @@ Overwrite `app/globals.css` with:
 
 v1's `App.jsx` used the `animate-blob` and `animation-delay-4000` class names on its background decoration, but never defined the keyframes anywhere — Tailwind silently ignored the unknown utility classes, so the blob animation never actually animated. This defines them for real.
 
-- [ ] **Step 8: Write a toolchain sanity test**
+- [x] **Step 8: Write a toolchain sanity test**
 
 Create `lib/__sanity.test.js`:
 
@@ -143,18 +143,18 @@ describe('toolchain sanity', () => {
 });
 ```
 
-- [ ] **Step 9: Run the test suite and verify it passes**
+- [x] **Step 9: Run the test suite and verify it passes**
 
 Run: `npm test`
 Expected: 1 test file, 1 test, PASS.
 
-- [ ] **Step 10: Verify the dev server boots**
+- [x] **Step 10: Verify the dev server boots**
 
 Run: `npm run dev` (in the background or a separate terminal)
 Verify: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000` returns `200`, or the terminal shows "Ready in ...ms".
 Stop the dev server afterward (Ctrl+C, or kill the background process).
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add app package.json package-lock.json next.config.js tailwind.config.js postcss.config.js jsconfig.json vitest.config.js vitest.setup.js lib/__sanity.test.js .gitignore
@@ -334,7 +334,7 @@ EOF
 - Consumes: nothing (pure JS, zero dependencies)
 - Produces: `cleanRows(rows, emailColumn)` from `lib/cleanEmails.js` — `rows: Array<Object>`, `emailColumn: string` → `{ cleanedRows: Array<Object>, headers: Array<string>, metrics: { originalRows: number, finalRows: number, removedCount: number }, removedDuplicates: Array<string> }`. Later tasks (the `/clean` page) call this directly on parsed file rows.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // lib/cleanEmails.test.js
@@ -393,12 +393,12 @@ describe('cleanRows', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run lib/cleanEmails.test.js`
 Expected: FAIL — Vitest cannot resolve `./cleanEmails` because `lib/cleanEmails.js` doesn't exist yet.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```js
 // lib/cleanEmails.js
@@ -450,12 +450,12 @@ export function cleanRows(rows, emailColumn) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run lib/cleanEmails.test.js`
 Expected: PASS (4 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/cleanEmails.js lib/cleanEmails.test.js
@@ -474,7 +474,7 @@ git commit -m "feat: add client-side email cleaning logic (port of v1 pandas ded
 - Consumes: `papaparse` (default export `Papa`), `xlsx` (`import * as XLSX from 'xlsx'`) — both already installed as dependencies.
 - Produces: `parseCSV(text)` → `{ headers: Array<string>, rows: Array<Object> }`; `parseXLSXBuffer(arrayBuffer)` → `{ headers: Array<string>, rows: Array<Object> }`; `parseFile(file)` (async) → `Promise<{ headers, rows }>` — all from `lib/parseFile.js`. Later tasks (the `/clean` page) call `parseFile` with a browser `File` and feed `rows`/`headers` into `cleanRows` from Task 3.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // lib/parseFile.test.js
@@ -522,12 +522,12 @@ describe('parseXLSXBuffer', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run lib/parseFile.test.js`
 Expected: FAIL — Vitest cannot resolve `./parseFile` because `lib/parseFile.js` doesn't exist yet.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```js
 // lib/parseFile.js
@@ -562,12 +562,12 @@ export async function parseFile(file) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run lib/parseFile.test.js`
 Expected: PASS (2 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/parseFile.js lib/parseFile.test.js
@@ -588,7 +588,7 @@ git commit -m "feat: add client-side CSV/XLSX parsing (papaparse + xlsx)"
 
 > **Fix applied during plan self-review:** the original draft of this task used `Packer.toBuffer(doc)`, which returns a Node.js `Buffer`. That would work in this task's own test (Vitest still runs inside a real Node process even under the `jsdom` test environment, so `Buffer` is available there) but would silently crash with "Buffer is not defined" the first time this function actually ran in a real browser via Task 15's client component — Next.js does not polyfill Node's `Buffer` on the client. `Packer.toBlob()` is the browser-safe equivalent and is used below instead.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // lib/generateDocx.test.js
@@ -613,12 +613,12 @@ describe('createTemplateDocxBlob', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run lib/generateDocx.test.js`
 Expected: FAIL — Vitest cannot resolve `./generateDocx` because `lib/generateDocx.js` doesn't exist yet.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```js
 // lib/generateDocx.js
@@ -632,12 +632,12 @@ export async function createTemplateDocxBlob(body) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run lib/generateDocx.test.js`
 Expected: PASS (1 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/generateDocx.js lib/generateDocx.test.js
@@ -655,7 +655,7 @@ git commit -m "feat: add client-side .docx generation for mail merge templates"
 **Interfaces:**
 - Produces: `supabase` (named export, browser-safe Supabase client, read-only per RLS) from `lib/supabaseClient.js`; `getSupabaseAdmin()` (named export, factory returning a service-role Supabase client) from `lib/supabaseAdmin.js`. Later tasks (7, 9, 10, 11) import these directly.
 
-- [ ] **Step 1: Create the browser-safe client**
+- [x] **Step 1: Create the browser-safe client**
 
 ```js
 // lib/supabaseClient.js
@@ -667,7 +667,7 @@ export const supabase = createClient(
 );
 ```
 
-- [ ] **Step 2: Create the server-only admin client factory**
+- [x] **Step 2: Create the server-only admin client factory**
 
 ```js
 // lib/supabaseAdmin.js
@@ -685,16 +685,16 @@ export function getSupabaseAdmin() {
 }
 ```
 
-- [ ] **Step 3: No dedicated automated test for this task**
+- [x] **Step 3: No dedicated automated test for this task**
 
 This is trivial factory/wiring code with no branching logic of its own — it's exercised indirectly through the mocked tests in Tasks 8, 9, and 10, which mock `getSupabaseAdmin`/`supabase` rather than hitting real Supabase. This is a deliberate scope decision, not a placeholder.
 
-- [ ] **Step 4: Manually verify no import errors**
+- [x] **Step 4: Manually verify no import errors**
 
 Run: `npm run dev`
 Expected: server starts cleanly with no module-resolution or import errors printed to the terminal. Load `http://localhost:3000` in a browser and check the console for errors — there should be none related to these two files (the app doesn't use them yet, so this just confirms they parse and resolve).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/supabaseClient.js lib/supabaseAdmin.js
@@ -713,7 +713,7 @@ git commit -m "feat: add Supabase browser and admin client wrappers"
 - Consumes: none.
 - Produces: `getOrCreateSessionId()` and `recordEvent(payload)` (named exports). Task 9 appends `fetchMetricsTotals()`/`subscribeMetricsTotals()` to this same file. Task 12's `SessionTracker` and the `/clean` page (Task 14) call `getOrCreateSessionId()`/`recordEvent()`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 // lib/metrics.test.js
@@ -763,12 +763,12 @@ describe('recordEvent', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run lib/metrics.test.js`
 Expected: FAIL with "Failed to resolve import './metrics'" or similar (the module doesn't exist yet).
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```js
 // lib/metrics.js
@@ -797,12 +797,12 @@ export async function recordEvent(payload) {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run lib/metrics.test.js`
 Expected: PASS (4 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/metrics.js lib/metrics.test.js
@@ -821,7 +821,7 @@ git commit -m "feat: add session id and event recording metrics helpers"
 - Consumes: `getSupabaseAdmin()` from `@/lib/supabaseAdmin` (Task 6).
 - Produces: `POST` handler at `/api/metrics/record`, called by `recordEvent()` (Task 7) from the browser.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 // app/api/metrics/record/route.test.js
@@ -900,12 +900,12 @@ describe('POST /api/metrics/record', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run app/api/metrics/record/route.test.js`
 Expected: FAIL (`route.js` doesn't exist yet)
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```js
 // app/api/metrics/record/route.js
@@ -954,12 +954,12 @@ export async function POST(request) {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run app/api/metrics/record/route.test.js`
 Expected: PASS (5 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/api/metrics/record/route.js app/api/metrics/record/route.test.js
@@ -979,7 +979,7 @@ git commit -m "feat: add metrics recording API route with validation"
 - Consumes: `supabase` from `@/lib/supabaseClient` (Task 6).
 - Produces: `fetchMetricsTotals()`, `subscribeMetricsTotals(onChange)` added to `lib/metrics.js`; default export `LiveStatsBanner` component, used by the hub homepage (Task 13).
 
-- [ ] **Step 1: Append the totals functions to `lib/metrics.js`**
+- [x] **Step 1: Append the totals functions to `lib/metrics.js`**
 
 ```js
 // lib/metrics.js — add this import at the top and these two functions at the bottom
@@ -1012,7 +1012,7 @@ export function subscribeMetricsTotals(onChange) {
 
 No new tests are added to `lib/metrics.test.js` for these two functions — they are one-line delegations to a Supabase client with no branching logic of their own; their behavior is verified through the `LiveStatsBanner` component tests below, which mock them directly. This is a deliberate scope decision.
 
-- [ ] **Step 2: Write the failing component tests**
+- [x] **Step 2: Write the failing component tests**
 
 ```jsx
 // components/LiveStatsBanner.test.jsx
@@ -1057,12 +1057,12 @@ describe('LiveStatsBanner', () => {
 });
 ```
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
 Run: `npx vitest run components/LiveStatsBanner.test.jsx`
 Expected: FAIL (`LiveStatsBanner.jsx` doesn't exist yet)
 
-- [ ] **Step 4: Write the component**
+- [x] **Step 4: Write the component**
 
 ```jsx
 // components/LiveStatsBanner.jsx
@@ -1106,12 +1106,12 @@ function StatTile({ label, value }) {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `npx vitest run components/LiveStatsBanner.test.jsx`
 Expected: PASS (2 tests)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/metrics.js components/LiveStatsBanner.jsx components/LiveStatsBanner.test.jsx
@@ -1132,7 +1132,7 @@ git commit -m "feat: add public live stats counter with realtime updates"
 - Consumes: `getSupabaseAdmin()` from `@/lib/supabaseAdmin` (Task 6).
 - Produces: `POST /api/templates`, `PUT /api/templates/[id]`, `DELETE /api/templates/[id]`, called by `lib/templates.js` (Task 11).
 
-- [ ] **Step 1: Write the failing tests for `POST /api/templates`**
+- [x] **Step 1: Write the failing tests for `POST /api/templates`**
 
 ```js
 // app/api/templates/route.test.js
@@ -1175,12 +1175,12 @@ describe('POST /api/templates', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run app/api/templates/route.test.js`
 Expected: FAIL (`route.js` doesn't exist yet)
 
-- [ ] **Step 3: Implement `app/api/templates/route.js`**
+- [x] **Step 3: Implement `app/api/templates/route.js`**
 
 ```js
 // app/api/templates/route.js
@@ -1207,12 +1207,12 @@ export async function POST(request) {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run app/api/templates/route.test.js`
 Expected: PASS (2 tests)
 
-- [ ] **Step 5: Write the failing tests for `PUT`/`DELETE /api/templates/[id]`**
+- [x] **Step 5: Write the failing tests for `PUT`/`DELETE /api/templates/[id]`**
 
 ```js
 // app/api/templates/[id]/route.test.js
@@ -1294,12 +1294,12 @@ describe('DELETE /api/templates/[id]', () => {
 });
 ```
 
-- [ ] **Step 6: Run tests to verify they fail**
+- [x] **Step 6: Run tests to verify they fail**
 
 Run: `npx vitest run "app/api/templates/[id]/route.test.js"`
 Expected: FAIL (`route.js` doesn't exist yet)
 
-- [ ] **Step 7: Implement `app/api/templates/[id]/route.js`**
+- [x] **Step 7: Implement `app/api/templates/[id]/route.js`**
 
 ```js
 // app/api/templates/[id]/route.js
@@ -1359,12 +1359,12 @@ export async function DELETE(request, { params }) {
 }
 ```
 
-- [ ] **Step 8: Run tests to verify they pass**
+- [x] **Step 8: Run tests to verify they pass**
 
 Run: `npx vitest run "app/api/templates/[id]/route.test.js"`
 Expected: PASS (4 tests)
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add app/api/templates/route.js app/api/templates/route.test.js "app/api/templates/[id]/route.js" "app/api/templates/[id]/route.test.js"
@@ -1383,7 +1383,7 @@ git commit -m "feat: add template write API routes with default-template protect
 - Consumes: `supabase` from `@/lib/supabaseClient` (Task 6); `/api/templates` and `/api/templates/[id]` routes (Task 10).
 - Produces: `fetchTemplates()`, `createTemplate()`, `updateTemplate()`, `deleteTemplate()` (named exports), used by the `/templates` page (Task 15).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 // lib/templates.test.js
@@ -1416,12 +1416,12 @@ describe('createTemplate', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run lib/templates.test.js`
 Expected: FAIL (`templates.js` doesn't exist yet)
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```js
 // lib/templates.js
@@ -1464,12 +1464,12 @@ export async function deleteTemplate(id) {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run lib/templates.test.js`
 Expected: PASS (2 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/templates.js lib/templates.test.js
@@ -1492,7 +1492,7 @@ git commit -m "feat: add templates client library"
 - Consumes: `lib/metrics.js` → `getOrCreateSessionId()`, `recordEvent(payload)` (Task 7).
 - Produces: `components/icons.jsx` → named exports `UploadCloudIcon`, `FileIcon`, `DownloadIcon`, `PlusIcon`, `EditIcon`, `TrashIcon`, `XIcon` (each `(props) => <svg ...>`). `components/ui.jsx` → named exports `LoadingSpinner`, `PrimaryButton({onClick, isLoading, text, loadingText, icon, className, disabled})`, `ErrorDisplay({message})`, `Metric({label, value})`, `ToolCard({href, title, description, icon})`. `components/Nav.jsx` → default export, no props. `components/SessionTracker.jsx` → default export, no props, renders `null`. Tasks 13–16 import all of these by these exact names.
 
-- [ ] **Step 1: Write the failing test for SessionTracker**
+- [x] **Step 1: Write the failing test for SessionTracker**
 
 ```jsx
 // components/SessionTracker.test.jsx
@@ -1533,12 +1533,12 @@ describe('SessionTracker', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run components/SessionTracker.test.jsx`
 Expected: FAIL — `./SessionTracker` does not exist yet.
 
-- [ ] **Step 3: Create `components/icons.jsx`**
+- [x] **Step 3: Create `components/icons.jsx`**
 
 ```jsx
 export const UploadCloudIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>;
@@ -1550,7 +1550,7 @@ export const TrashIcon = (props) => <svg {...props} xmlns="http://www.w3.org/200
 export const XIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
 ```
 
-- [ ] **Step 4: Create `components/ui.jsx`**
+- [x] **Step 4: Create `components/ui.jsx`**
 
 ```jsx
 'use client';
@@ -1604,7 +1604,7 @@ export const ToolCard = ({ href, title, description, icon }) => (
 );
 ```
 
-- [ ] **Step 5: Create `components/Nav.jsx`**
+- [x] **Step 5: Create `components/Nav.jsx`**
 
 ```jsx
 'use client';
@@ -1626,7 +1626,7 @@ export default function Nav() {
 }
 ```
 
-- [ ] **Step 6: Create `components/SessionTracker.jsx`**
+- [x] **Step 6: Create `components/SessionTracker.jsx`**
 
 ```jsx
 'use client';
@@ -1645,12 +1645,12 @@ export default function SessionTracker() {
 }
 ```
 
-- [ ] **Step 7: Run the test to verify it passes**
+- [x] **Step 7: Run the test to verify it passes**
 
 Run: `npx vitest run components/SessionTracker.test.jsx`
 Expected: PASS (2 tests)
 
-- [ ] **Step 8: Replace `app/layout.jsx`**
+- [x] **Step 8: Replace `app/layout.jsx`**
 
 ```jsx
 import './globals.css';
@@ -1682,11 +1682,11 @@ export default function RootLayout({ children }) {
 }
 ```
 
-- [ ] **Step 9: Manually verify the layout**
+- [x] **Step 9: Manually verify the layout**
 
 Run: `npm run dev`, open `http://localhost:3000`. Confirm the nav bar, gradient/blob background, and page content wrapper all render with no console errors.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add components/icons.jsx components/ui.jsx components/Nav.jsx components/SessionTracker.jsx components/SessionTracker.test.jsx app/layout.jsx
@@ -1704,7 +1704,7 @@ git commit -m "feat: add shared UI atoms, nav, root layout, and session tracking
 - Consumes: `components/LiveStatsBanner.jsx` (default export, no props — Task 9), `components/ui.jsx` → `ToolCard` (Task 12), `components/icons.jsx` → `UploadCloudIcon`, `FileIcon`, `DownloadIcon` (Task 12).
 - Produces: nothing consumed by later tasks (leaf page).
 
-- [ ] **Step 1: Create `app/page.jsx`**
+- [x] **Step 1: Create `app/page.jsx`**
 
 ```jsx
 import LiveStatsBanner from '@/components/LiveStatsBanner';
@@ -1746,11 +1746,11 @@ export default function HomePage() {
 }
 ```
 
-- [ ] **Step 2: Manually verify**
+- [x] **Step 2: Manually verify**
 
 Run: `npm run dev`, open `http://localhost:3000/`. Confirm the header, live stats banner (even showing zeros), and all three tool cards render and link to the correct routes.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/page.jsx
@@ -1769,7 +1769,7 @@ git commit -m "feat: add hub homepage with tool cards and live stats banner"
 - Consumes: `lib/parseFile.js` → `parseFile(file)` async → `{headers, rows}` (Task 4); `lib/cleanEmails.js` → `cleanRows(rows, emailColumn)` sync → `{cleanedRows, headers, metrics:{originalRows, finalRows, removedCount}, removedDuplicates}` (Task 3); `lib/metrics.js` → `getOrCreateSessionId()`, `recordEvent(payload)` (Task 7); `components/ui.jsx` → `PrimaryButton`, `ErrorDisplay`, `Metric` (Task 12); `components/icons.jsx` → `UploadCloudIcon`, `FileIcon`, `DownloadIcon` (Task 12).
 - Produces: nothing consumed by later tasks (leaf page).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```jsx
 // app/clean/page.test.jsx
@@ -1854,12 +1854,12 @@ describe('CleanPage', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run app/clean/page.test.jsx`
 Expected: FAIL — `./page` does not exist yet.
 
-- [ ] **Step 3: Create `app/clean/page.jsx`**
+- [x] **Step 3: Create `app/clean/page.jsx`**
 
 ```jsx
 'use client';
@@ -2040,12 +2040,12 @@ export default function CleanPage() {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx vitest run app/clean/page.test.jsx`
 Expected: PASS (3 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/clean/page.jsx app/clean/page.test.jsx
@@ -2068,7 +2068,7 @@ git commit -m "feat: add client-side Email Cleaner tool page"
 
 > **Note on `triggerDownload` duplication:** this task defines its own copy of the `triggerDownload(blob, filename)` helper, identical to the one in Task 14's `app/clean/page.jsx`. That's intentional, not an oversight — both pages are meant to be fully independent leaf pages per the spec, so neither imports from the other. A future cleanup could extract this into a shared `lib/download.js`, but that's out of scope for this plan.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```jsx
 // app/templates/page.test.jsx
@@ -2137,12 +2137,12 @@ describe('TemplatesPage', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run app/templates/page.test.jsx`
 Expected: FAIL — `./page` does not exist yet.
 
-- [ ] **Step 3: Create `components/TemplateModal.jsx`**
+- [x] **Step 3: Create `components/TemplateModal.jsx`**
 
 ```jsx
 'use client';
@@ -2194,7 +2194,7 @@ export default function TemplateModal({ templateToEdit, onSave, onClose }) {
 }
 ```
 
-- [ ] **Step 4: Create `components/ConfirmationModal.jsx`**
+- [x] **Step 4: Create `components/ConfirmationModal.jsx`**
 
 ```jsx
 'use client';
@@ -2216,7 +2216,7 @@ export default function ConfirmationModal({ title, message, onConfirm, onCancel 
 }
 ```
 
-- [ ] **Step 5: Create `app/templates/page.jsx`**
+- [x] **Step 5: Create `app/templates/page.jsx`**
 
 ```jsx
 'use client';
@@ -2409,12 +2409,12 @@ export default function TemplatesPage() {
 }
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 Run: `npx vitest run app/templates/page.test.jsx`
 Expected: PASS (3 tests)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add components/TemplateModal.jsx components/ConfirmationModal.jsx app/templates/page.jsx app/templates/page.test.jsx
@@ -2434,7 +2434,7 @@ git commit -m "feat: add Template Builder tool page with default-template protec
 - Consumes: nothing.
 - Produces: nothing consumed by later tasks (leaf page).
 
-- [ ] **Step 1: Copy the tutorial assets from v1**
+- [x] **Step 1: Copy the tutorial assets from v1**
 
 ```bash
 mkdir -p public/images
@@ -2451,7 +2451,7 @@ cp "mail-merge-frontend/public/images/Step 6.mp4" "public/images/Step 6.mp4"
 
 (The video is kept as an asset for a possible future embed on this page — not wired in yet; that's out of scope for this task.)
 
-- [ ] **Step 2: Create `app/tutorial/page.jsx`**
+- [x] **Step 2: Create `app/tutorial/page.jsx`**
 
 ```jsx
 const steps = [
@@ -2485,11 +2485,11 @@ export default function TutorialPage() {
 }
 ```
 
-- [ ] **Step 3: Manually verify**
+- [x] **Step 3: Manually verify**
 
 Run: `npm run dev`, open `http://localhost:3000/tutorial`. Confirm all 8 numbered steps render with their images loading (no broken-image icons).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/tutorial/page.jsx public/images
