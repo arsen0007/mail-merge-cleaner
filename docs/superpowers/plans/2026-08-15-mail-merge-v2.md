@@ -185,11 +185,11 @@ EOF
 
 > Reminder: this project has no auth and is public/no-login. All Supabase **writes** must go through server-side API routes using the service-role key — the anon key (used directly by the browser) must only ever have `select` access, enforced by the RLS policies below.
 
-- [ ] **Step 1: Create a Supabase project**
+- [x] **Step 1: Create a Supabase project**
 
 Go to supabase.com/dashboard → New Project. Once it's provisioned, go to Settings → API and note down: the **Project URL**, the **anon public** key, and the **service_role** key (keep the service_role key secret — it bypasses RLS entirely).
 
-- [ ] **Step 2: Write the schema SQL to the repo**
+- [x] **Step 2: Write the schema SQL to the repo**
 
 Create `supabase/schema.sql`:
 
@@ -251,7 +251,7 @@ create policy metrics_totals_public_read on metrics_totals for select using (tru
 
 (Note: the trigger function body is delimited with `$trigger$` instead of bare `$$` purely so it doesn't collide with the `$$`-delimited seed values in Step 3 if you paste both into the same SQL Editor session — functionally identical.)
 
-- [ ] **Step 3: Run the schema, then seed the 6 default templates**
+- [x] **Step 3: Run the schema, then seed the 6 default templates**
 
 Paste `supabase/schema.sql` into the Supabase SQL Editor and run it.
 
@@ -267,11 +267,11 @@ insert into templates (title, subject, body, is_default) values
 ($t$Alternate Version 3A: Neutral & Direct$t$, $t$...$t$, $body$...$body$, true);
 ```
 
-- [ ] **Step 4: Enable Realtime on `metrics_totals`**
+- [x] **Step 4: Enable Realtime on `metrics_totals`**
 
 In the Supabase dashboard: Database → Replication → find the `metrics_totals` table → toggle it on.
 
-- [ ] **Step 5: Document the required env vars**
+- [x] **Step 5: Document the required env vars**
 
 Create `.env.local.example`:
 
@@ -285,7 +285,7 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-- [ ] **Step 6: Create your real local env file**
+- [x] **Step 6: Create your real local env file**
 
 ```bash
 cp .env.local.example .env.local
@@ -293,7 +293,7 @@ cp .env.local.example .env.local
 
 Fill in the four real values from Step 1. Confirm `.env.local` is gitignored — create-next-app's default `.gitignore` already excludes `.env*.local`; run `git check-ignore .env.local` and confirm it prints the filename (meaning it's correctly ignored) before proceeding.
 
-- [ ] **Step 7: Verify the seed data manually**
+- [x] **Step 7: Verify the seed data manually**
 
 Run (substituting your real project URL and anon key):
 
@@ -305,7 +305,7 @@ curl -s "https://your-project.supabase.co/rest/v1/templates?select=title,is_defa
 
 Expected: a JSON array of 6 objects, all with `"is_default": true`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add supabase/schema.sql .env.local.example
