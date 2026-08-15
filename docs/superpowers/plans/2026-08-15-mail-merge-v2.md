@@ -2533,7 +2533,7 @@ Work through this checklist on the actual deployed site (not localhost):
 - `/tutorial` — confirm all 8 steps and their images render.
 - Reload the homepage and confirm "Files cleaned" and "Rows processed" ticked up from the `/clean` action performed above — this proves the realtime counter works end-to-end in production, not just in local dev.
 
-- [ ] **Step 5: Remove v1's leftovers**
+- [x] **Step 5: Remove v1's leftovers**
 
 Only after the QA pass above is green — v1's code and assets are no longer needed:
 
@@ -2542,7 +2542,7 @@ git rm -r mail-merge-frontend mail-merge-backend unsued
 git rm app.py "backend commands.txt"
 ```
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git commit -m "$(cat <<'EOF'
