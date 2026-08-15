@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "app/globals.css"
+        ],
+        "createdAt": "2026-08-15T22:52:41.227Z",
+        "reason": "Postal Ledger design system: faint (4-7% opacity) horizontal ledger-rule + paper-grain texture, applied once as the page background layer, directly reinforcing the app's own ledger/correspondence-desk theme (UI itself labels a panel 'Ledger'). Domain-appropriate ruled-paper surface, not a generic decorative grid."
+      }
+    ]
+  }
+}
