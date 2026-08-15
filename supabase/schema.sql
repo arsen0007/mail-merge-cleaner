@@ -10,7 +10,9 @@ create table templates (
 
 create table metrics_events (
   id bigint generated always as identity primary key,
-  tool text not null,
+  -- nullable: session_started events (fired by SessionTracker on every page
+  -- load) aren't tied to any specific tool
+  tool text,
   event_type text not null check (event_type in ('file_cleaned', 'session_started')),
   rows_processed bigint check (rows_processed is null or (rows_processed >= 0 and rows_processed <= 1000000)),
   session_id uuid not null,
