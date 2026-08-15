@@ -2508,11 +2508,11 @@ git commit -m "feat: add standalone Tutorial page with v1 walkthrough assets"
 - Consumes: everything from Tasks 1-16 — this is the final integration and cleanup task.
 - Produces: a live, working v2 deployment; a repo with v1 fully removed, resolving the spec's open question in favor of "replace in place."
 
-- [ ] **Step 1: Fix the Vercel project's build settings**
+- [x] **Step 1: Fix the Vercel project's build settings** (Root Directory was still pointed at mail-merge-frontend/, serving stale v1 despite "successful" builds — fixed by user)
 
 In the Vercel dashboard for the existing "mail-merge-cleaner" project (Settings → General → Build & Development Settings): confirm **Framework Preset** is set to "Next.js" and **Root Directory** is blank/the repo root — v1's setup may have pointed this at the `mail-merge-frontend` subfolder, which would break the v2 build since the Next.js app now lives at the repo root.
 
-- [ ] **Step 2: Add the Supabase environment variables**
+- [x] **Step 2: Add the Supabase environment variables**
 
 In Settings → Environment Variables, add all four (for both Production and Preview environments), using the real values from your `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -2520,11 +2520,11 @@ In Settings → Environment Variables, add all four (for both Production and Pre
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-- [ ] **Step 3: Deploy**
+- [x] **Step 3: Deploy**
 
 Push the current branch (or run `vercel --prod` if using the Vercel CLI locally) and wait for the deployment to finish building.
 
-- [ ] **Step 4: Manual QA pass on the live URL**
+- [x] **Step 4: Manual QA pass on the live URL** (verified via Playwright against https://mail-merge-cleaner.vercel.app: homepage/live stats, /clean, /templates default-template protection, /tutorial all render correctly with 0 console errors; metrics reset to zero for launch)
 
 Work through this checklist on the actual deployed site (not localhost):
 - Homepage loads, and the live stats banner shows real numbers (not stuck on nothing — confirms Supabase env vars and RLS are wired correctly in production).
