@@ -13,17 +13,16 @@ export default function Nav() {
 
   return (
     <nav className="relative z-10 bg-paper-raised/90 backdrop-blur border-b border-line">
-      <div className="container mx-auto max-w-4xl px-4 md:px-8 py-4 flex items-center justify-between gap-3">
-        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 text-ink group shrink-0">
-          <span className="postmark-ring w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center text-stamp -rotate-6 transition-transform group-hover:rotate-0">
-            <span className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border border-current" />
-          </span>
-          <span className="font-mono font-bold tracking-tight text-sm sm:text-base whitespace-nowrap">
-            <span className="hidden sm:inline">Mail Merge Pro</span>
-            <span className="sm:hidden">MMP</span>
-          </span>
+      <div className="container mx-auto max-w-4xl px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <Link href="/" className="flex items-center text-ink group shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/logo.png"
+            alt="Mail Merge Pro"
+            className="h-14 sm:h-20 md:h-24 w-auto"
+          />
         </Link>
-        <div className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm overflow-x-auto">
+        <div className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm md:text-base overflow-x-auto">
           {links.map(({ href, label }) => {
             const active = pathname === href;
             return (
